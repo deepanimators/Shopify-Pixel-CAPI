@@ -1,4 +1,5 @@
 name = "AdTrace Web Pixel"
+uid = "8dbe0414-04e0-e07a-0177-1f08fc78a596f75ac9d6"
 type = "web_pixel_extension"
 runtime_context = "strict"
 
