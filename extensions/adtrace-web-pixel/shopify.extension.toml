@@ -1,0 +1,9 @@
+name = "AdTrace Web Pixel"
+type = "web_pixel_extension"
+runtime_context = "strict"
+
+[customer_privacy]
+analytics = true
+marketing = true
+preferences = true
+sale_of_data = "enabled"

@@ -1,22 +1,28 @@
 import { env } from "../../config/env.js";
 import { logger } from "../../lib/logger.js";
 import type { NormalizedEvent } from "../events/types.js";
+import type { MetaConnection } from "../platform/types.js";
 
 export class MetaClient {
-  async sendEvent(event: NormalizedEvent): Promise<boolean> {
-    if (!env.META_PIXEL_ID || !env.META_ACCESS_TOKEN) {
-      logger.info("Meta delivery skipped because credentials are not configured", {
-        eventId: event.eventId
+  async sendEvent(event: NormalizedEvent, connection?: MetaConnection): Promise<boolean> {
+    const pixelId = connection?.pixelId ?? env.DEFAULT_META_PIXEL_ID;
+    const accessToken = connection?.accessToken ?? env.DEFAULT_META_ACCESS_TOKEN;
+    const enabled = connection?.enabled ?? Boolean(pixelId && accessToken);
+
+    if (!enabled || !pixelId || !accessToken) {
+      logger.info("Meta delivery skipped because tenant credentials are not configured", {
+        eventId: event.eventId,
+        tenantId: event.tenantId
       });
       return false;
     }
 
-    const url = `https://graph.facebook.com/v22.0/${env.META_PIXEL_ID}/events?access_token=${env.META_ACCESS_TOKEN}`;
+    const url = `https://graph.facebook.com/${env.META_GRAPH_API_VERSION}/${pixelId}/events?access_token=${accessToken}`;
 
     const payload = {
       data: [
         {
-          event_name: this.toMetaEventName(event.eventName),
+          event_name: this.toMetaEventName(event.canonicalEvent),
           event_time: Math.floor(new Date(event.occurredAt).getTime() / 1000),
           event_id: event.eventId,
           action_source: "website",
@@ -31,10 +37,14 @@ export class MetaClient {
           custom_data: {
             currency: event.commerce?.currency ?? event.market.currencyCode,
             value: event.commerce?.value,
-            order_id: event.commerce?.orderId
+            order_id: event.commerce?.orderId,
+            market_id: event.market.marketId,
+            domain: event.market.domain,
+            canonical_event: event.canonicalEvent
           }
         }
-      ]
+      ],
+      test_event_code: connection?.testEventCode
     };
 
     const response = await fetch(url, {
@@ -62,14 +72,26 @@ export class MetaClient {
     switch (eventName) {
       case "page_view":
         return "PageView";
+      case "collection_view":
+        return "ViewCategory";
       case "product_view":
         return "ViewContent";
+      case "search":
+        return "Search";
+      case "cart_view":
+        return "ViewCart";
       case "add_to_cart":
         return "AddToCart";
+      case "remove_from_cart":
+        return "RemoveFromCart";
+      case "add_payment_info":
+        return "AddPaymentInfo";
       case "begin_checkout":
         return "InitiateCheckout";
       case "purchase":
         return "Purchase";
+      case "custom_event":
+        return "CustomEvent";
       default:
         return eventName;
     }

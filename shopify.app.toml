@@ -1,0 +1,30 @@
+client_id = "SHOPIFY_API_KEY"
+name = "AdTrace Enterprise"
+handle = "adtrace-enterprise"
+application_url = "https://your-app-domain.com"
+embedded = true
+
+[access_scopes]
+scopes = "read_orders,read_customers,read_markets,write_pixels,read_customer_events,write_app_proxy"
+
+[auth]
+redirect_urls = [
+  "https://your-app-domain.com/auth/callback",
+  "http://localhost:3000/auth/callback"
+]
+
+[webhooks]
+api_version = "2025-10"
+
+[[webhooks.subscriptions]]
+topics = [ "app/uninstalled", "shop/update", "app/scopes_update", "app_subscriptions/update" ]
+uri = "/webhooks/shopify"
+
+[[webhooks.subscriptions]]
+compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
+uri = "/webhooks/shopify"
+
+[app_proxy]
+url = "https://your-app-domain.com/api/events"
+subpath = "adtrace"
+prefix = "apps"

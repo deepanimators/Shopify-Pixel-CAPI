@@ -1,139 +1,143 @@
-# Architecture
+# Enterprise Architecture
 
-## Product Definition
+## System Goal
 
-This system is a Shopify-first tracking and attribution engine that sits between storefront behavior and downstream advertising platforms.
+AdTrace Enterprise is a Shopify app that creates a consistent tracking and attribution layer across:
 
-Its job is to:
-
-- capture events from Shopify storefronts
-- normalize them
-- enrich them with identity and market context
-- deduplicate them
-- forward them via server-side APIs
-
-## Why This Exists
-
-Modern Shopify brands often run:
-
+- multiple Shopify stores
 - multiple regional domains
 - multiple Shopify Markets
-- multiple currencies
-- fragmented checkout and customer journeys
+- multiple currencies and customer journeys
 
-That breaks attribution because event data becomes inconsistent, duplicated, or missing.
+## Primary Application Surfaces
 
-## High-Level Flow
+### Embedded admin app
 
-1. A storefront tracker or Shopify pixel captures an event.
-2. The event is sent to the ingestion API.
-3. The tenant is resolved from the Shopify store context.
-4. The system enriches the event with:
-   - identity
-   - market
-   - domain
-   - commerce metadata
-5. The event is normalized and assigned stable IDs.
-6. A dedupe key is computed.
-7. If the event is new, it is stored and routed to destinations.
-8. The Meta adapter sends the server-side conversion payload.
+Merchant operators use the admin surface to:
 
-## Domain Model
+- install and authorize the app
+- review billing plans
+- connect Meta credentials
+- map domains and markets
+- inspect diagnostics and webhook health
+
+### Storefront collection layer
+
+Storefront events are collected through:
+
+- Shopify Web Pixel extension
+- direct event ingestion endpoints
+- future webhook reconciliation for server-confirmed commerce events
+
+### Server-side processing layer
+
+The backend is responsible for:
+
+- resolving the tenant and shop installation
+- normalizing events
+- enriching with market and domain context
+- resolving identity
+- deduplicating events
+- forwarding clean payloads to Meta
+
+## Core Domain Model
 
 ### Tenant
 
-Represents one Shopify merchant using the app.
+Represents one merchant account in the AdTrace platform.
 
-Core fields:
+Important fields:
+
+- `tenantId`
+- `displayName`
+- `shopDomain`
+- `planId`
+- `status`
+- `supportedDomains[]`
+- `supportedMarkets[]`
+- `meta`
+
+### Shop installation
+
+Represents the Shopify app installation state.
+
+Important fields:
+
+- `shopDomain`
+- `tenantId`
+- `accessToken`
+- `scopes[]`
+- `status`
+- `installedAt`
+
+### Normalized event
+
+Represents a clean tracking record after enrichment.
+
+Important fields:
 
 - `tenantId`
 - `shopDomain`
-- `displayName`
-- `markets[]`
-- `domains[]`
-- destination credentials
-
-### Identity
-
-Represents a unified user profile assembled from multiple identifiers.
-
-Core fields:
-
-- `identityKey`
-- `anonymousId`
-- `customerId`
-- `email`
-- `phone`
-- `externalId`
-
-### Event
-
-Represents the normalized event used across the pipeline.
-
-Core fields:
-
-- `eventId`
 - `eventName`
 - `source`
-- `occurredAt`
-- `tenantId`
-- `shopDomain`
-- `domain`
+- `eventId`
+- `dedupeKey`
 - `market`
 - `identity`
 - `commerce`
-- `dedupeKey`
+- `deliveredToMeta`
 
 ## Multi-Market Design
 
-Multi-market support should be part of the event model itself.
-
-Every event should carry market-aware attributes:
+Every event includes market context:
 
 - `countryCode`
 - `currencyCode`
 - `marketId`
 - `domain`
 
-This allows attribution analysis per region and ensures downstream conversions keep the right business context.
+This ensures the same platform can support:
+
+- country-specific attribution
+- market-specific domain routing
+- currency-aware purchase events
 
 ## Multi-Domain Design
 
-Multi-domain support should be handled at the identity and tenant layers.
+Multi-domain support is modeled at the tenant layer, not as a per-request afterthought.
 
-Key rules:
+Each tenant owns:
 
-- one tenant can own multiple domains
-- one user journey can span multiple domains
-- the same user should map to one unified identity where possible
-- dedupe keys must not break when domains change mid-journey
+- a primary domain
+- zero or more regional domains
+- market-specific mappings
 
-## MVP Service Boundaries
+This makes it possible to associate one customer journey with one merchant even when a shopper crosses between regional storefronts.
 
-### Ingestion Service
+## Shopify App Boundaries
 
-Validates and normalizes incoming events.
+### OAuth and install
 
-### Identity Resolver
+The app uses a Shopify install flow and callback flow to create or refresh merchant installations.
 
-Builds a stable identity key from available user identifiers.
+### Webhooks
 
-### Tenant Registry
+The app includes a single webhook endpoint that is responsible for:
 
-Determines which tenant/store configuration applies to a given event.
+- compliance webhooks
+- app uninstall lifecycle
+- future subscription and scope change handling
 
-### Deduplication Logic
+### Billing
 
-Prevents browser and server duplicates from being counted twice.
+The current codebase models a billing catalog and tenant plan assignment, with the next step being Shopify Billing API activation.
 
-### Destination Adapter
+## Enterprise Production Steps
 
-Transforms normalized events into Meta CAPI payloads and sends them.
+The repository now has the correct boundaries, but production hardening should still add:
 
-## Recommended Next Infrastructure
-
-- PostgreSQL for durable storage
-- Redis or queueing for retries and async fanout
-- Shopify OAuth for installation
-- webhook ingestion for order reconciliation
-- admin dashboard for per-tenant configuration
+1. PostgreSQL repositories using `docs/postgres-schema.sql`
+2. queue-based delivery and retries
+3. Admin GraphQL integration for billing and web pixel activation
+4. persistent identity graph and reconciliation jobs
+5. role-based access, audit logs, and operational alerting
