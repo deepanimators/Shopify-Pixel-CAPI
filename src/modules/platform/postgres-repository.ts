@@ -3,6 +3,7 @@ import type { Pool, PoolClient } from "pg";
 import type { PlatformRepository } from "./repository.js";
 import type {
   DestinationConfigs,
+  DestinationScope,
   MetaConnection,
   ShopInstallation,
   Tenant,
@@ -456,6 +457,66 @@ export class PostgresPlatformRepository implements PlatformRepository {
     return this.getTenant(tenantId);
   }
 
+  async upsertDestinationScope(tenantId: string, scope: DestinationScope): Promise<Tenant | null> {
+    const tenant = await this.getTenant(tenantId);
+    if (!tenant) {
+      return null;
+    }
+
+    await this.pool.query(
+      `insert into tenant_destination_overrides (
+        tenant_id,
+        scope_type,
+        scope_id,
+        label,
+        domain_host,
+        market_id,
+        destinations,
+        created_at,
+        updated_at
+      ) values ($1, $2, $3, $4, $5, $6, $7::jsonb, now(), now())
+      on conflict (tenant_id, scope_type, scope_id) do update set
+        label = excluded.label,
+        domain_host = excluded.domain_host,
+        market_id = excluded.market_id,
+        destinations = excluded.destinations,
+        updated_at = now()`,
+      [
+        tenantId,
+        scope.scopeType,
+        scope.scopeId,
+        scope.label,
+        scope.domainHost ?? null,
+        scope.marketId ?? null,
+        JSON.stringify(scope.destinations ?? {})
+      ]
+    );
+
+    await this.pool.query(`update tenants set updated_at = now() where tenant_id = $1`, [tenantId]);
+
+    return this.getTenant(tenantId);
+  }
+
+  async deleteDestinationScope(
+    tenantId: string,
+    scopeType: DestinationScope["scopeType"],
+    scopeId: string
+  ): Promise<Tenant | null> {
+    const tenant = await this.getTenant(tenantId);
+    if (!tenant) {
+      return null;
+    }
+
+    await this.pool.query(
+      `delete from tenant_destination_overrides
+       where tenant_id = $1 and scope_type = $2 and scope_id = $3`,
+      [tenantId, scopeType, scopeId]
+    );
+    await this.pool.query(`update tenants set updated_at = now() where tenant_id = $1`, [tenantId]);
+
+    return this.getTenant(tenantId);
+  }
+
   async recordWebhook(receipt: WebhookReceipt): Promise<void> {
     await this.pool.query(
       `insert into webhook_receipts (topic, shop_domain, verified, received_at, payload)
@@ -487,12 +548,14 @@ export class PostgresPlatformRepository implements PlatformRepository {
   }
 
   private async hydrateTenant(row: TenantRow): Promise<Tenant> {
-    const [supportedDomains, supportedMarkets, destinations, tracking] = await Promise.all([
+    const [supportedDomains, supportedMarkets, destinations, destinationScopes, tracking] =
+      await Promise.all([
       this.loadDomains(row.tenant_id),
       this.loadMarkets(row.tenant_id),
       this.loadDestinations(row.tenant_id),
+      this.loadDestinationScopes(row.tenant_id),
       this.loadTracking(row.tenant_id)
-    ]);
+      ]);
 
     return {
       tenantId: row.tenant_id,
@@ -503,6 +566,7 @@ export class PostgresPlatformRepository implements PlatformRepository {
       supportedDomains,
       supportedMarkets,
       destinations,
+      destinationScopes,
       tracking,
       createdAt: toIso(row.created_at),
       updatedAt: toIso(row.updated_at)
@@ -691,6 +755,34 @@ export class PostgresPlatformRepository implements PlatformRepository {
       }))
     };
   }
+
+  private async loadDestinationScopes(tenantId: string): Promise<DestinationScope[]> {
+    const result = await this.pool.query<{
+      scope_type: DestinationScope["scopeType"];
+      scope_id: string;
+      label: string;
+      domain_host: string | null;
+      market_id: string | null;
+      destinations: unknown;
+      updated_at: Date | string;
+    }>(
+      `select scope_type, scope_id, label, domain_host, market_id, destinations, updated_at
+       from tenant_destination_overrides
+       where tenant_id = $1
+       order by scope_type asc, scope_id asc`,
+      [tenantId]
+    );
+
+    return result.rows.map((row) => ({
+      scopeType: row.scope_type,
+      scopeId: row.scope_id,
+      label: row.label,
+      domainHost: row.domain_host ?? undefined,
+      marketId: row.market_id ?? undefined,
+      destinations: parseDestinationConfigs(row.destinations),
+      updatedAt: toIso(row.updated_at)
+    }));
+  }
 }
 
 function mapInstallationRow(row: {
@@ -714,6 +806,8 @@ function mapInstallationRow(row: {
 }
 
 async function ensureTenantExists(client: PoolClient, tenantId: string, shopDomain?: string) {
+  const resolvedShopDomain = shopDomain ?? `${tenantId}.myshopify.com`;
+
   await client.query(
     `insert into tenants (
       tenant_id,
@@ -727,7 +821,21 @@ async function ensureTenantExists(client: PoolClient, tenantId: string, shopDoma
     on conflict (tenant_id) do update set
       shop_domain = excluded.shop_domain,
       updated_at = now()`,
-    [tenantId, prettifyTenantName(tenantId), shopDomain ?? `${tenantId}.myshopify.com`]
+    [tenantId, prettifyTenantName(tenantId), resolvedShopDomain]
+  );
+
+  await client.query(
+    `insert into tenant_domains (
+      tenant_id,
+      host,
+      primary_domain,
+      market_id
+    )
+    select $1, $2, true, null
+    where not exists (
+      select 1 from tenant_domains where tenant_id = $1 and host = $2
+    )`,
+    [tenantId, resolvedShopDomain]
   );
 }
 
@@ -749,4 +857,16 @@ function toIso(value: Date | string) {
 
 function toNullableIso(value: Date | string | null) {
   return value ? toIso(value) : undefined;
+}
+
+function parseDestinationConfigs(value: unknown): DestinationConfigs {
+  if (!value) {
+    return {};
+  }
+
+  if (typeof value === "string") {
+    return JSON.parse(value) as DestinationConfigs;
+  }
+
+  return value as DestinationConfigs;
 }

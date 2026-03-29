@@ -55,6 +55,7 @@ function makeTenant(): Tenant {
     supportedDomains: [],
     supportedMarkets: [],
     destinations: {},
+    destinationScopes: [],
     tracking: {
       enabledScenarioIds: [],
       customEventMappings: []
@@ -110,5 +111,83 @@ describe("destination service", () => {
     expect(deliveries.ga4.status).toBe("delivered");
     expect(deliveries.googleAds.status).toBe("preview");
     expect(deliveries.tiktok.status).toBe("skipped");
+  });
+
+  it("resolves market and domain overrides before sending to adapters", async () => {
+    const observed = [] as string[];
+    const tenant = makeTenant();
+    tenant.destinations = {
+      meta: {
+        enabled: true,
+        pixelId: "tenant-default",
+        accessToken: "tenant-token"
+      }
+    };
+    tenant.destinationScopes = [
+      {
+        scopeType: "market",
+        scopeId: "in",
+        label: "India",
+        marketId: "in",
+        destinations: {
+          meta: {
+            enabled: true,
+            pixelId: "market-in",
+            accessToken: "market-token"
+          }
+        },
+        updatedAt: "2026-03-29T12:00:00.000Z"
+      },
+      {
+        scopeType: "domain",
+        scopeId: "example.in",
+        label: "example.in",
+        domainHost: "example.in",
+        destinations: {
+          meta: {
+            enabled: true,
+            pixelId: "domain-example-in",
+            accessToken: "domain-token"
+          }
+        },
+        updatedAt: "2026-03-29T12:00:00.000Z"
+      }
+    ];
+
+    const adapters: DestinationAdapter[] = [
+      {
+        name: "meta",
+        async sendEvent(_event, scopedTenant) {
+          observed.push(scopedTenant.destinations.meta?.pixelId ?? "missing");
+          return {
+            status: "delivered",
+            detail: "ok"
+          };
+        }
+      },
+      {
+        name: "ga4",
+        async sendEvent() {
+          return { status: "skipped", detail: "not configured" };
+        }
+      },
+      {
+        name: "googleAds",
+        async sendEvent() {
+          return { status: "skipped", detail: "not configured" };
+        }
+      },
+      {
+        name: "tiktok",
+        async sendEvent() {
+          return { status: "skipped", detail: "not configured" };
+        }
+      }
+    ];
+
+    const service = new DestinationService(adapters);
+    await service.deliver(makeEvent(), tenant);
+
+    expect(observed).toEqual(["domain-example-in"]);
   });
 });

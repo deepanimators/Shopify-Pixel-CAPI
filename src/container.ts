@@ -15,7 +15,7 @@ import {
 } from "./modules/platform/repository.js";
 import { PostgresPlatformRepository } from "./modules/platform/postgres-repository.js";
 import { PlatformService } from "./modules/platform/service.js";
-import { createSeedPlatformData } from "./modules/platform/seed.js";
+import { createEmptyPlatformData, createSeedPlatformData } from "./modules/platform/seed.js";
 import { ShopifyAuthService } from "./modules/shopify/auth.js";
 import { ShopifyWebhookService } from "./modules/shopify/webhooks.js";
 
@@ -76,7 +76,9 @@ function createRepositories(): {
   }
 
   return {
-    platformRepository: new InMemoryPlatformRepository(createSeedPlatformData()),
+    platformRepository: new InMemoryPlatformRepository(
+      env.NODE_ENV === "test" ? createSeedPlatformData() : createEmptyPlatformData()
+    ),
     eventRepository: new InMemoryEventRepository()
   };
 }

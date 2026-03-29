@@ -1,5 +1,13 @@
 import type { PlatformSeed } from "./types.js";
 
+export function createEmptyPlatformData(): PlatformSeed {
+  return {
+    tenants: [],
+    installations: [],
+    webhooks: []
+  };
+}
+
 export function createSeedPlatformData(): PlatformSeed {
   const now = new Date().toISOString();
 
@@ -64,6 +72,7 @@ export function createSeedPlatformData(): PlatformSeed {
             enabled: false
           }
         },
+        destinationScopes: [],
         tracking: {
           enabledScenarioIds: [
             "page_view",
@@ -129,6 +138,7 @@ export function createSeedPlatformData(): PlatformSeed {
             enabled: false
           }
         },
+        destinationScopes: [],
         tracking: {
           enabledScenarioIds: [
             "page_view",
@@ -153,8 +163,7 @@ export function createSeedPlatformData(): PlatformSeed {
           "read_customers",
           "read_markets",
           "write_pixels",
-          "read_customer_events",
-          "write_app_proxy"
+          "read_customer_events"
         ],
         status: "installed",
         installedAt: now

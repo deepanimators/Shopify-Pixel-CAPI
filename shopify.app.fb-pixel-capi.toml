@@ -2,7 +2,7 @@
 
 client_id = "fcb447576080550bbf9bf6f4db443f47"
 name = "FB Pixel CAPI"
-application_url = "https://example.com"
+application_url = "https://fb-pixel-capi.pthapp.co.in"
 embedded = true
 
 [build]
@@ -13,12 +13,12 @@ api_version = "2026-01"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = ""
+scopes = "read_orders,read_customers,read_markets,write_pixels,read_customer_events"
 optional_scopes = [ ]
 use_legacy_install_flow = false
 
 [auth]
-redirect_urls = [ ]
+redirect_urls = [ "https://fb-pixel-capi.pthapp.co.in/auth/callback" ]
 
 [app_proxy]
 url = "https://fb-pixel-capi.pthapp.co.in/apps/adtrace"

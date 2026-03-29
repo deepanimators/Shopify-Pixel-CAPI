@@ -64,6 +64,31 @@ const destinationConfigsSchema = z.object({
     .optional()
 });
 
+const destinationScopeSchema = z.object({
+  scopeType: z.enum(["domain", "market"]),
+  scopeId: z.string().min(1),
+  label: z.string().min(1),
+  domainHost: z.string().min(1).optional(),
+  marketId: z.string().min(1).optional(),
+  destinations: destinationConfigsSchema
+}).superRefine((value, context) => {
+  if (value.scopeType === "domain" && !value.domainHost) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "domainHost is required for domain scope",
+      path: ["domainHost"]
+    });
+  }
+
+  if (value.scopeType === "market" && !value.marketId) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "marketId is required for market scope",
+      path: ["marketId"]
+    });
+  }
+});
+
 export function createAdminRouter(container: AppContainer) {
   const router = Router();
 
@@ -139,6 +164,50 @@ export function createAdminRouter(container: AppContainer) {
     const tenant = await container.platformService.updateDestinationConfigs(
       request.params.tenantId,
       parsed.data
+    );
+
+    if (!tenant) {
+      return response.status(404).json({ error: "Tenant not found" });
+    }
+
+    return response.json(tenant);
+  });
+
+  router.put("/tenants/:tenantId/destination-scopes", async (request, response) => {
+    const parsed = destinationScopeSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return response.status(400).json({
+        error: "Invalid destination scope payload",
+        issues: parsed.error.flatten()
+      });
+    }
+
+    const tenant = await container.platformService.upsertDestinationScope(
+      request.params.tenantId,
+      parsed.data
+    );
+
+    if (!tenant) {
+      return response.status(404).json({ error: "Tenant not found" });
+    }
+
+    return response.json(tenant);
+  });
+
+  router.delete("/tenants/:tenantId/destination-scopes", async (request, response) => {
+    const scopeType = String(request.query.scopeType ?? "");
+    const scopeId = String(request.query.scopeId ?? "");
+
+    if (!["domain", "market"].includes(scopeType) || !scopeId) {
+      return response.status(400).json({
+        error: "scopeType (domain|market) and scopeId are required"
+      });
+    }
+
+    const tenant = await container.platformService.deleteDestinationScope(
+      request.params.tenantId,
+      scopeType as "domain" | "market",
+      scopeId
     );
 
     if (!tenant) {

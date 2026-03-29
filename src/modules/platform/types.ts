@@ -55,6 +55,18 @@ export interface DestinationConfigs {
   tiktok?: TikTokConnection;
 }
 
+export type DestinationScopeType = "tenant" | "domain" | "market";
+
+export interface DestinationScope {
+  scopeType: Exclude<DestinationScopeType, "tenant">;
+  scopeId: string;
+  label: string;
+  domainHost?: string;
+  marketId?: string;
+  destinations: DestinationConfigs;
+  updatedAt?: string;
+}
+
 export interface CustomEventMapping {
   sourceName: string;
   scenarioId: string;
@@ -75,6 +87,7 @@ export interface Tenant {
   supportedDomains: TenantDomain[];
   supportedMarkets: TenantMarket[];
   destinations: DestinationConfigs;
+  destinationScopes: DestinationScope[];
   tracking: TenantTrackingConfig;
   createdAt: string;
   updatedAt: string;

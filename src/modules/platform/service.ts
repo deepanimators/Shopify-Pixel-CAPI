@@ -4,7 +4,7 @@ import type { EventRepository } from "../events/repository.js";
 import type { DeliveryStatus, NormalizedEvent } from "../events/types.js";
 import { EVENT_SCENARIOS, getScenarioById, scenarioSummary } from "../events/scenarios.js";
 import type { PlatformRepository } from "./repository.js";
-import type { Tenant } from "./types.js";
+import type { DestinationScope, Tenant } from "./types.js";
 import type { ShopifyAuthService } from "../shopify/auth.js";
 
 export class PlatformService {
@@ -105,6 +105,18 @@ export class PlatformService {
     destinationConfigs: Tenant["destinations"]
   ) {
     return this.platformRepository.updateDestinationConfigs(tenantId, destinationConfigs);
+  }
+
+  async upsertDestinationScope(tenantId: string, scope: DestinationScope) {
+    return this.platformRepository.upsertDestinationScope(tenantId, scope);
+  }
+
+  async deleteDestinationScope(
+    tenantId: string,
+    scopeType: DestinationScope["scopeType"],
+    scopeId: string
+  ) {
+    return this.platformRepository.deleteDestinationScope(tenantId, scopeType, scopeId);
   }
 
   async listInstallations() {

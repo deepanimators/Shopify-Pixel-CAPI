@@ -236,6 +236,12 @@ export function renderDashboard() {
         align-items: end;
       }
 
+      .scope-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
       .summary-grid {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -316,6 +322,9 @@ export function renderDashboard() {
           grid-template-columns: 1fr;
         }
         .mapping-row {
+          grid-template-columns: 1fr;
+        }
+        .scope-grid {
           grid-template-columns: 1fr;
         }
         .summary-grid,
@@ -498,6 +507,33 @@ export function renderDashboard() {
               can also store merchant configuration and payload previews.
             </p>
           </div>
+          <div class="stack">
+            <div class="scope-grid">
+              <div>
+                <label for="destinationScopeType">Scope</label>
+                <select id="destinationScopeType">
+                  <option value="tenant">Tenant Default</option>
+                  <option value="domain">Domain Override</option>
+                  <option value="market">Market Override</option>
+                </select>
+              </div>
+              <div>
+                <label for="destinationDomainSelect">Domain</label>
+                <select id="destinationDomainSelect"></select>
+              </div>
+              <div>
+                <label for="destinationMarketSelect">Market</label>
+                <select id="destinationMarketSelect"></select>
+              </div>
+            </div>
+            <div class="row">
+              <span class="pill" id="destinationScopeBadge">Tenant default</span>
+              <button class="button button-secondary" id="resetDestinationScopeButton">Reset selected override</button>
+            </div>
+            <div class="muted" id="destinationScopeHint">
+              Destination configuration can be saved as a tenant default or overridden for a specific domain or market.
+            </div>
+          </div>
           <div class="destination-list">
             <div class="item destination-card">
               <h3>Meta</h3>
@@ -558,7 +594,10 @@ export function renderDashboard() {
         scenarios: [],
         tenantId: null,
         tenantDetail: null,
-        commerceAnalytics: null
+        commerceAnalytics: null,
+        destinationScopeType: 'tenant',
+        destinationDomainHost: null,
+        destinationMarketId: null
       };
 
       async function fetchJson(path, options) {
@@ -587,7 +626,9 @@ export function renderDashboard() {
           overview.diagnostics.averageQuality + ' average quality score.';
 
         const tenantSelect = document.getElementById('tenantSelect');
-        tenantSelect.innerHTML = overview.tenants.map((tenant) => \`<option value="\${tenant.tenantId}">\${tenant.displayName}</option>\`).join('');
+        tenantSelect.innerHTML = overview.tenants.length
+          ? overview.tenants.map((tenant) => \`<option value="\${tenant.tenantId}">\${tenant.displayName}</option>\`).join('')
+          : '<option value="">No installed shops yet</option>';
 
         const scenarioSelect = document.getElementById('scenarioSelect');
         scenarioSelect.innerHTML = state.scenarios.map((scenario) => \`<option value="\${scenario.id}">\${scenario.label} (\${scenario.recommendedEventName})</option>\`).join('');
@@ -598,6 +639,11 @@ export function renderDashboard() {
         tenantSelect.value = state.tenantId || '';
 
         renderRecentEvents(overview.recentEvents || []);
+        if (!overview.tenants.length) {
+          document.getElementById('workspaceStatus').textContent = 'Install the app in a Shopify store to load real domains, markets, and destination scopes.';
+          return;
+        }
+
         await loadTenantDetail();
       }
 
@@ -621,8 +667,10 @@ export function renderDashboard() {
         document.getElementById('mappingCount').textContent = tenant.tracking.customEventMappings.length + ' mappings configured';
         document.getElementById('workspaceStatus').textContent = '';
 
+        ensureDestinationScopeState(tenant);
         renderScenarioChecklist(tenant);
         renderMappings(tenant);
+        renderDestinationScopeControls(tenant);
         renderDestinations(tenant);
         renderCommerceAnalytics(commerceAnalytics);
       }
@@ -667,7 +715,8 @@ export function renderDashboard() {
       }
 
       function renderDestinations(tenant) {
-        const destinations = tenant.destinations || {};
+        const context = resolveDestinationContext(tenant);
+        const destinations = context.destinations || {};
 
         document.getElementById('metaEnabled').checked = !!destinations.meta?.enabled;
         document.getElementById('metaPixelId').value = destinations.meta?.pixelId || '';
@@ -686,6 +735,105 @@ export function renderDashboard() {
         document.getElementById('tiktokEnabled').checked = !!destinations.tiktok?.enabled;
         document.getElementById('tiktokPixelCode').value = destinations.tiktok?.pixelCode || '';
         document.getElementById('tiktokAccessToken').value = destinations.tiktok?.accessToken || '';
+        document.getElementById('destinationScopeBadge').textContent = context.badge;
+        document.getElementById('destinationScopeHint').textContent = context.hint;
+        document.getElementById('resetDestinationScopeButton').style.display =
+          context.scopeType === 'tenant' ? 'none' : 'inline-flex';
+      }
+
+      function ensureDestinationScopeState(tenant) {
+        if (!state.destinationScopeType) {
+          state.destinationScopeType = 'tenant';
+        }
+
+        if (!state.destinationDomainHost && tenant.supportedDomains.length) {
+          state.destinationDomainHost = tenant.supportedDomains[0].host;
+        }
+
+        if (!state.destinationMarketId && tenant.supportedMarkets.length) {
+          state.destinationMarketId = tenant.supportedMarkets[0].id;
+        }
+
+        if (state.destinationScopeType === 'domain' && !tenant.supportedDomains.length) {
+          state.destinationScopeType = 'tenant';
+        }
+
+        if (state.destinationScopeType === 'market' && !tenant.supportedMarkets.length) {
+          state.destinationScopeType = 'tenant';
+        }
+      }
+
+      function renderDestinationScopeControls(tenant) {
+        const scopeTypeSelect = document.getElementById('destinationScopeType');
+        const domainSelect = document.getElementById('destinationDomainSelect');
+        const marketSelect = document.getElementById('destinationMarketSelect');
+
+        scopeTypeSelect.value = state.destinationScopeType;
+        domainSelect.innerHTML = tenant.supportedDomains.length
+          ? tenant.supportedDomains.map((domain) => \`
+              <option value="\${domain.host}">
+                \${domain.host}\${domain.primary ? ' (primary)' : ''}\${domain.marketId ? ' • ' + domain.marketId : ''}
+              </option>
+            \`).join('')
+          : '<option value="">No domains synced</option>';
+        marketSelect.innerHTML = tenant.supportedMarkets.length
+          ? tenant.supportedMarkets.map((market) => \`
+              <option value="\${market.id}">
+                \${market.label} • \${market.currencyCode} • \${market.storefrontDomain}
+              </option>
+            \`).join('')
+          : '<option value="">No markets synced</option>';
+
+        domainSelect.value = state.destinationDomainHost || '';
+        marketSelect.value = state.destinationMarketId || '';
+        domainSelect.disabled = state.destinationScopeType !== 'domain' || !tenant.supportedDomains.length;
+        marketSelect.disabled = state.destinationScopeType !== 'market' || !tenant.supportedMarkets.length;
+      }
+
+      function resolveDestinationContext(tenant) {
+        const mergedDefault = mergeDestinationConfigs({}, tenant.destinations || {});
+
+        if (state.destinationScopeType === 'domain') {
+          const selectedHost = state.destinationDomainHost;
+          const override = (tenant.destinationScopes || []).find((entry) =>
+            entry.scopeType === 'domain' && entry.scopeId === selectedHost
+          );
+
+          return {
+            scopeType: 'domain',
+            scopeId: selectedHost,
+            destinations: mergeDestinationConfigs(mergedDefault, override?.destinations || {}),
+            badge: override ? 'Domain override active' : 'Domain inherits tenant default',
+            hint: override
+              ? 'Saving now updates the selected domain override only.'
+              : 'Saving now will create a domain-specific override from the tenant default.'
+          };
+        }
+
+        if (state.destinationScopeType === 'market') {
+          const selectedMarketId = state.destinationMarketId;
+          const override = (tenant.destinationScopes || []).find((entry) =>
+            entry.scopeType === 'market' && entry.scopeId === selectedMarketId
+          );
+
+          return {
+            scopeType: 'market',
+            scopeId: selectedMarketId,
+            destinations: mergeDestinationConfigs(mergedDefault, override?.destinations || {}),
+            badge: override ? 'Market override active' : 'Market inherits tenant default',
+            hint: override
+              ? 'Saving now updates the selected market override only.'
+              : 'Saving now will create a market-specific override from the tenant default.'
+          };
+        }
+
+        return {
+          scopeType: 'tenant',
+          scopeId: 'tenant',
+          destinations: mergedDefault,
+          badge: 'Tenant default',
+          hint: 'Saving now updates the default destination config used when no domain or market override applies.'
+        };
       }
 
       function renderRecentEvents(events) {
@@ -863,6 +1011,17 @@ export function renderDashboard() {
         return [...document.querySelectorAll('[data-scenario-id]:checked')].map((input) => input.getAttribute('data-scenario-id'));
       }
 
+      function mergeDestinationConfigs(current, incoming) {
+        return {
+          ...current,
+          ...incoming,
+          meta: incoming.meta ? { ...(current.meta || {}), ...incoming.meta } : current.meta,
+          ga4: incoming.ga4 ? { ...(current.ga4 || {}), ...incoming.ga4 } : current.ga4,
+          googleAds: incoming.googleAds ? { ...(current.googleAds || {}), ...incoming.googleAds } : current.googleAds,
+          tiktok: incoming.tiktok ? { ...(current.tiktok || {}), ...incoming.tiktok } : current.tiktok
+        };
+      }
+
       async function saveTracking() {
         const payload = {
           enabledScenarioIds: collectEnabledScenarioIds(),
@@ -906,13 +1065,70 @@ export function renderDashboard() {
           }
         };
 
-        state.tenantDetail = await fetchJson('/api/admin/tenants/' + state.tenantId + '/destinations', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
+        if (state.destinationScopeType === 'tenant') {
+          state.tenantDetail = await fetchJson('/api/admin/tenants/' + state.tenantId + '/destinations', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        } else if (state.destinationScopeType === 'domain') {
+          state.tenantDetail = await fetchJson('/api/admin/tenants/' + state.tenantId + '/destination-scopes', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              scopeType: 'domain',
+              scopeId: state.destinationDomainHost,
+              label: state.destinationDomainHost,
+              domainHost: state.destinationDomainHost,
+              destinations: payload
+            })
+          });
+        } else {
+          const selectedMarket = state.tenantDetail.supportedMarkets.find((market) => market.id === state.destinationMarketId);
+          state.tenantDetail = await fetchJson('/api/admin/tenants/' + state.tenantId + '/destination-scopes', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              scopeType: 'market',
+              scopeId: state.destinationMarketId,
+              label: selectedMarket ? selectedMarket.label : state.destinationMarketId,
+              marketId: state.destinationMarketId,
+              destinations: payload
+            })
+          });
+        }
 
-        document.getElementById('destinationStatus').textContent = 'Destination settings saved.';
+        renderDestinationScopeControls(state.tenantDetail);
+        renderDestinations(state.tenantDetail);
+        document.getElementById('destinationStatus').textContent = state.destinationScopeType === 'tenant'
+          ? 'Tenant default destinations saved.'
+          : 'Scoped destination override saved.';
+        await loadOverview();
+      }
+
+      async function resetDestinationScope() {
+        if (state.destinationScopeType === 'tenant') {
+          document.getElementById('destinationStatus').textContent = 'Tenant default cannot be reset.';
+          return;
+        }
+
+        const scopeId = state.destinationScopeType === 'domain'
+          ? state.destinationDomainHost
+          : state.destinationMarketId;
+
+        if (!scopeId) {
+          document.getElementById('destinationStatus').textContent = 'Choose a domain or market first.';
+          return;
+        }
+
+        state.tenantDetail = await fetchJson(
+          '/api/admin/tenants/' + state.tenantId + '/destination-scopes?scopeType=' + encodeURIComponent(state.destinationScopeType) + '&scopeId=' + encodeURIComponent(scopeId),
+          { method: 'DELETE' }
+        );
+
+        renderDestinationScopeControls(state.tenantDetail);
+        renderDestinations(state.tenantDetail);
+        document.getElementById('destinationStatus').textContent = 'Selected override reset to tenant default.';
         await loadOverview();
       }
 
@@ -953,9 +1169,23 @@ export function renderDashboard() {
         state.tenantId = event.target.value;
         await loadTenantDetail();
       });
+      document.getElementById('destinationScopeType').addEventListener('change', (event) => {
+        state.destinationScopeType = event.target.value;
+        renderDestinationScopeControls(state.tenantDetail);
+        renderDestinations(state.tenantDetail);
+      });
+      document.getElementById('destinationDomainSelect').addEventListener('change', (event) => {
+        state.destinationDomainHost = event.target.value;
+        renderDestinations(state.tenantDetail);
+      });
+      document.getElementById('destinationMarketSelect').addEventListener('change', (event) => {
+        state.destinationMarketId = event.target.value;
+        renderDestinations(state.tenantDetail);
+      });
       document.getElementById('saveScenarioButton').addEventListener('click', saveTracking);
       document.getElementById('saveMappingsButton').addEventListener('click', saveTracking);
       document.getElementById('saveDestinationsButton').addEventListener('click', saveDestinations);
+      document.getElementById('resetDestinationScopeButton').addEventListener('click', resetDestinationScope);
       document.getElementById('addMappingButton').addEventListener('click', addMapping);
 
       loadOverview().catch((error) => {

@@ -97,6 +97,20 @@ create table tenant_custom_event_mappings (
 create unique index tenant_custom_event_mappings_unique_idx
   on tenant_custom_event_mappings (tenant_id, source_name);
 
+create table tenant_destination_overrides (
+  id bigserial primary key,
+  tenant_id text not null references tenants(tenant_id) on delete cascade,
+  scope_type text not null,
+  scope_id text not null,
+  label text not null,
+  domain_host text,
+  market_id text,
+  destinations jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (tenant_id, scope_type, scope_id)
+);
+
 create table shop_installations (
   shop_domain text primary key,
   tenant_id text not null references tenants(tenant_id) on delete cascade,
