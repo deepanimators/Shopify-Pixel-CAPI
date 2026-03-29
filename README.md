@@ -10,6 +10,7 @@ This repository now models the app as a real Shopify product:
 - server-side event ingestion and Meta Conversion API delivery
 - Shopify OAuth, billing plan catalog, and compliance webhook handling
 - a Web Pixel extension scaffold for storefront capture
+- a deployable hosted backend runtime for one app serving many stores
 
 ## Product Positioning
 
@@ -44,6 +45,12 @@ This repository is structured as an enterprise Shopify app, not a one-endpoint p
 - Admin APIs for tenants, plans, install links, and Meta settings
 - OAuth install and callback routes
 - Compliance and lifecycle webhook endpoint
+
+### Hosted backend surface
+
+- One deployable backend for all installed stores
+- Public app URL used by Shopify OAuth, embedded admin, webhooks, and app proxy
+- Merchant-specific configuration stored per tenant, not in `.env`
 
 ### Tracking surfaces
 
@@ -166,6 +173,17 @@ The app includes scaffolds for:
 - billing plan catalog
 - web pixel extension
 
+### 5a. Hosted Backend Runtime
+
+The repository now includes deployment-oriented backend assets:
+
+- `.env.example`
+- `Dockerfile`
+- `render.yaml`
+- `docs/backend-hosting.md`
+
+This backend is meant to be hosted once and reused by all merchant installs.
+
 ### 6. Event Quality Diagnostics
 
 Every normalized event is enriched with:
@@ -263,6 +281,10 @@ npm run dev
 Open:
 
 - `http://localhost:3000/app`
+
+For hosting and deployment guidance, see:
+
+- `docs/backend-hosting.md`
 
 ## Environment Variables
 

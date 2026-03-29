@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: fb-pixel-capi-backend
+    runtime: node
+    plan: starter
+    region: singapore
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: SHOPIFY_APP_URL
+        value: https://fb-pixel-capi.pthapp.co.in
+      - key: SHOPIFY_SCOPES
+        value: read_orders,read_customers,read_markets,write_pixels,read_customer_events,write_app_proxy
+      - key: SHOPIFY_API_KEY
+        sync: false
+      - key: SHOPIFY_API_SECRET
+        sync: false
+      - key: DEFAULT_META_PIXEL_ID
+        sync: false
+      - key: DEFAULT_META_ACCESS_TOKEN
+        sync: false

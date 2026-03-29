@@ -20,7 +20,7 @@ export function createAuthRouter(container: AppContainer) {
 
   router.get("/callback", async (request, response) => {
     try {
-      const url = new URL(request.originalUrl, "http://localhost");
+      const url = new URL(request.originalUrl, "fb-pixel-capi.pthapp.co.in");
       const result = await container.shopifyAuthService.handleCallback(url.searchParams);
 
       response.status(200).send(`<!DOCTYPE html>

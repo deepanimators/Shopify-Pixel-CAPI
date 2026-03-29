@@ -1,7 +1,7 @@
 client_id = "SHOPIFY_API_KEY"
 name = "AdTrace Enterprise"
 handle = "adtrace-enterprise"
-application_url = "https://your-app-domain.com"
+application_url = "https://fb-pixel-capi.pthapp.co.in"
 embedded = true
 
 [access_scopes]
@@ -9,8 +9,8 @@ scopes = "read_orders,read_customers,read_markets,write_pixels,read_customer_eve
 
 [auth]
 redirect_urls = [
-  "https://your-app-domain.com/auth/callback",
-  "http://localhost:3000/auth/callback"
+  "https://fb-pixel-capi.pthapp.co.in/auth/callback",
+  "fb-pixel-capi.pthapp.co.in/auth/callback"
 ]
 
 [webhooks]
@@ -25,6 +25,6 @@ compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact
 uri = "/webhooks/shopify"
 
 [app_proxy]
-url = "https://your-app-domain.com/api/events"
+url = "https://fb-pixel-capi.pthapp.co.in/api/events"
 subpath = "adtrace"
 prefix = "apps"
