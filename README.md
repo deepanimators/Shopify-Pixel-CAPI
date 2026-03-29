@@ -11,6 +11,7 @@ This repository now models the app as a real Shopify product:
 - Shopify OAuth, billing plan catalog, and compliance webhook handling
 - a Web Pixel extension scaffold for storefront capture
 - a deployable hosted backend runtime for one app serving many stores
+- optional Postgres persistence for tenants, installations, tracking config, and events
 
 ## Product Positioning
 

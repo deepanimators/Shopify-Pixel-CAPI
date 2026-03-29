@@ -2,6 +2,7 @@ import type { Server } from "node:http";
 
 import { createApp } from "./app.js";
 import { env } from "./config/env.js";
+import { closeDatabasePool } from "./lib/database.js";
 import { logger } from "./lib/logger.js";
 
 export function startServer() {
@@ -20,11 +21,24 @@ export function startServer() {
 function registerShutdown(server: Server) {
   const shutdown = (signal: string) => {
     logger.info("Shutting down API", { signal });
-    server.close((error) => {
+    server.close(async (error) => {
       if (error) {
         logger.error("Server shutdown failed", {
           signal,
           message: error.message
+        });
+        process.exitCode = 1;
+        return;
+      }
+
+      try {
+        await closeDatabasePool();
+      } catch (databaseError) {
+        const message =
+          databaseError instanceof Error ? databaseError.message : "Unknown database error";
+        logger.error("Database shutdown failed", {
+          signal,
+          message
         });
         process.exitCode = 1;
       }

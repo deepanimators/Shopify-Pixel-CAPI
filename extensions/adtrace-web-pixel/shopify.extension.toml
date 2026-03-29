@@ -8,3 +8,26 @@ analytics = true
 marketing = true
 preferences = true
 sale_of_data = "enabled"
+
+[settings]
+type = "object"
+
+[settings.fields.shopDomain]
+name = "Shop domain"
+description = "MyShopify or storefront domain associated with this tenant."
+type = "single_line_text_field"
+
+[settings.fields.countryCode]
+name = "Country code"
+description = "Fallback ISO country code for market-aware events."
+type = "single_line_text_field"
+
+[settings.fields.currencyCode]
+name = "Currency code"
+description = "Fallback ISO currency code for event enrichment."
+type = "single_line_text_field"
+
+[settings.fields.marketId]
+name = "Market ID"
+description = "Optional Shopify Market identifier for this storefront."
+type = "single_line_text_field"

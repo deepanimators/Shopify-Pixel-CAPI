@@ -14,8 +14,11 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@shopify/web-pixels-extension": "^2.18.0",
+    "@types/pg": "^8.20.0",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "pg": "^8.20.0",
     "zod": "^3.25.8"
   },
   "devDependencies": {

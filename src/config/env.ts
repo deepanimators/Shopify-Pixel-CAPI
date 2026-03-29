@@ -11,14 +11,18 @@ const normalizedProcessEnv = {
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(3000),
+  STORAGE_DRIVER: z.enum(["memory", "postgres"]).default("memory"),
+  DATABASE_URL: z.string().optional(),
+  DATABASE_SSL: z
+    .union([z.literal("true"), z.literal("false"), z.boolean()])
+    .optional()
+    .transform((value) => value === true || value === "true"),
   SHOPIFY_API_KEY: z.string().optional(),
   SHOPIFY_API_SECRET: z.string().optional(),
   SHOPIFY_APP_URL: z.string().url().default("http://localhost:3000"),
   SHOPIFY_SCOPES: z
     .string()
-    .default(
-      "read_orders,read_customers,read_markets,write_pixels,read_customer_events,write_app_proxy"
-    ),
+    .default("read_orders,read_customers,read_markets,write_pixels,read_customer_events"),
   META_GRAPH_API_VERSION: z.string().default("v22.0"),
   DEFAULT_META_PIXEL_ID: z.string().optional(),
   DEFAULT_META_ACCESS_TOKEN: z.string().optional()
@@ -29,6 +33,12 @@ export const env = parseEnv();
 function parseEnv() {
   const parsed = envSchema.safeParse(normalizedProcessEnv);
   if (parsed.success) {
+    if (parsed.data.STORAGE_DRIVER === "postgres" && !parsed.data.DATABASE_URL) {
+      throw new Error(
+        "Invalid environment configuration:\nDATABASE_URL: Required when STORAGE_DRIVER=postgres."
+      );
+    }
+
     return parsed.data;
   }
 

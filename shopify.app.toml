@@ -5,12 +5,11 @@ application_url = "https://fb-pixel-capi.pthapp.co.in"
 embedded = true
 
 [access_scopes]
-scopes = "read_orders,read_customers,read_markets,write_pixels,read_customer_events,write_app_proxy"
+scopes = "read_orders,read_customers,read_markets,write_pixels,read_customer_events"
 
 [auth]
 redirect_urls = [
-  "https://fb-pixel-capi.pthapp.co.in/auth/callback",
-  "fb-pixel-capi.pthapp.co.in/auth/callback"
+  "https://fb-pixel-capi.pthapp.co.in/auth/callback"
 ]
 
 [webhooks]
@@ -25,6 +24,6 @@ compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact
 uri = "/webhooks/shopify"
 
 [app_proxy]
-url = "https://fb-pixel-capi.pthapp.co.in/api/events"
+url = "https://fb-pixel-capi.pthapp.co.in/apps/adtrace"
 subpath = "adtrace"
 prefix = "apps"

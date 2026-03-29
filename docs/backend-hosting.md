@@ -65,10 +65,19 @@ Minimum production environment variables:
 ```env
 NODE_ENV=production
 PORT=3000
+STORAGE_DRIVER=postgres
+DATABASE_URL=postgres://...
+DATABASE_SSL=true
 SHOPIFY_API_KEY=...
 SHOPIFY_API_SECRET=...
 SHOPIFY_APP_URL=https://fb-pixel-capi.pthapp.co.in
-SHOPIFY_SCOPES=read_orders,read_customers,read_markets,write_pixels,read_customer_events,write_app_proxy
+SHOPIFY_SCOPES=read_orders,read_customers,read_markets,write_pixels,read_customer_events
+```
+
+Apply the schema before starting the app:
+
+```bash
+psql "$DATABASE_URL" -f docs/postgres-schema.sql
 ```
 
 ## Shopify app config
@@ -81,6 +90,7 @@ Your Shopify app should point to the hosted backend:
 
 ## Recommended next production step
 
-The codebase still uses in-memory repositories for demo behavior.
+The codebase now supports:
 
-To make this backend production ready, replace the in-memory platform and event repositories with PostgreSQL-backed implementations using `docs/postgres-schema.sql`.
+- `STORAGE_DRIVER=memory` for local/demo mode
+- `STORAGE_DRIVER=postgres` for persisted server-side storage
