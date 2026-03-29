@@ -8,6 +8,33 @@ create table if not exists tenants (
   updated_at timestamptz not null
 );
 
+create table if not exists app_users (
+  user_id text primary key,
+  email text not null unique,
+  display_name text not null,
+  global_role text not null,
+  status text not null,
+  password_hash text not null,
+  created_at timestamptz not null,
+  updated_at timestamptz not null
+);
+
+create table if not exists app_sessions (
+  session_token text primary key,
+  user_id text not null references app_users(user_id) on delete cascade,
+  expires_at timestamptz not null,
+  created_at timestamptz not null
+);
+
+create table if not exists tenant_memberships (
+  user_id text not null references app_users(user_id) on delete cascade,
+  tenant_id text not null references tenants(tenant_id) on delete cascade,
+  role text not null,
+  created_at timestamptz not null,
+  updated_at timestamptz not null,
+  primary key (user_id, tenant_id)
+);
+
 create table if not exists tenant_domains (
   id bigserial primary key,
   tenant_id text not null references tenants(tenant_id) on delete cascade,

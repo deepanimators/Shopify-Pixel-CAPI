@@ -373,6 +373,16 @@ export function renderDashboard() {
           </div>
         </article>
         <aside class="card">
+          <div class="row" style="justify-content: space-between; align-items: flex-start;">
+            <div>
+              <div class="metric-label">Signed In</div>
+              <strong id="currentUserName">--</strong>
+              <div class="muted" id="currentUserMeta">Loading session…</div>
+            </div>
+            <form method="post" action="/auth/logout">
+              <button class="button button-secondary" type="submit">Logout</button>
+            </form>
+          </div>
           <div class="metric-strip">
             <div class="metric">
               <div class="metric-label">Tenants</div>
@@ -640,6 +650,7 @@ export function renderDashboard() {
       let state = {
         overview: null,
         installations: [],
+        session: null,
         scenarios: [],
         tenantId: null,
         tenantDetail: null,
@@ -660,14 +671,16 @@ export function renderDashboard() {
       }
 
       async function loadOverview() {
-        const [overview, scenarioRegistry, installations] = await Promise.all([
+        const [overview, scenarioRegistry, installations, session] = await Promise.all([
           fetchJson('/api/admin/overview'),
           fetchJson('/api/admin/scenarios'),
-          fetchJson('/api/admin/installations')
+          fetchJson('/api/admin/installations'),
+          fetchJson('/auth/session')
         ]);
 
         state.overview = overview;
         state.installations = installations;
+        state.session = session;
         state.scenarios = scenarioRegistry.scenarios;
 
         const params = new URLSearchParams(window.location.search);
@@ -679,6 +692,8 @@ export function renderDashboard() {
         document.getElementById('metricTenants').textContent = overview.summary.tenants;
         document.getElementById('metricEvents').textContent = overview.summary.trackedEvents;
         document.getElementById('metricScenarios').textContent = scenarioRegistry.summary.total;
+        document.getElementById('currentUserName').textContent = session.user.displayName;
+        document.getElementById('currentUserMeta').textContent = session.user.email + ' • ' + session.user.globalRole.replaceAll('_', ' ');
         document.getElementById('summaryHint').textContent =
           overview.summary.domains + ' domains, ' + overview.summary.markets + ' markets, ' +
           overview.diagnostics.averageQuality + ' average quality score.';

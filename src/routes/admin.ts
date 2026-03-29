@@ -93,14 +93,40 @@ export function createAdminRouter(container: AppContainer) {
   const router = Router();
 
   router.get("/overview", async (_request, response) => {
-    response.json(await container.platformService.getOverview());
+    const auth = response.locals.auth;
+    if (!auth) {
+      return response.status(401).json({ error: "Authentication required" });
+    }
+
+    response.json(
+      await container.platformService.getOverview(
+        auth.canManageAllTenants ? undefined : auth.accessibleTenantIds
+      )
+    );
   });
 
   router.get("/tenants", async (_request, response) => {
-    response.json(await container.platformService.listTenants());
+    const auth = response.locals.auth;
+    if (!auth) {
+      return response.status(401).json({ error: "Authentication required" });
+    }
+
+    response.json(
+      await container.platformService.listTenants(
+        auth.canManageAllTenants ? undefined : auth.accessibleTenantIds
+      )
+    );
   });
 
   router.get("/tenants/:tenantId", async (request, response) => {
+    const auth = response.locals.auth;
+    if (!auth) {
+      return response.status(401).json({ error: "Authentication required" });
+    }
+    if (!container.userAuthService.canViewTenant(auth, request.params.tenantId)) {
+      return response.status(403).json({ error: "You do not have access to this tenant" });
+    }
+
     const detail = await container.platformService.getTenantDetail(request.params.tenantId);
 
     if (!detail) {
@@ -111,6 +137,14 @@ export function createAdminRouter(container: AppContainer) {
   });
 
   router.put("/tenants/:tenantId/meta", async (request, response) => {
+    const auth = response.locals.auth;
+    if (!auth) {
+      return response.status(401).json({ error: "Authentication required" });
+    }
+    if (!container.userAuthService.canEditTenant(auth, request.params.tenantId)) {
+      return response.status(403).json({ error: "You do not have permission to edit this tenant" });
+    }
+
     const parsed = metaSchema.safeParse(request.body);
     if (!parsed.success) {
       return response.status(400).json({
@@ -132,6 +166,14 @@ export function createAdminRouter(container: AppContainer) {
   });
 
   router.put("/tenants/:tenantId/tracking", async (request, response) => {
+    const auth = response.locals.auth;
+    if (!auth) {
+      return response.status(401).json({ error: "Authentication required" });
+    }
+    if (!container.userAuthService.canEditTenant(auth, request.params.tenantId)) {
+      return response.status(403).json({ error: "You do not have permission to edit this tenant" });
+    }
+
     const parsed = trackingSchema.safeParse(request.body);
     if (!parsed.success) {
       return response.status(400).json({
@@ -153,6 +195,14 @@ export function createAdminRouter(container: AppContainer) {
   });
 
   router.put("/tenants/:tenantId/destinations", async (request, response) => {
+    const auth = response.locals.auth;
+    if (!auth) {
+      return response.status(401).json({ error: "Authentication required" });
+    }
+    if (!container.userAuthService.canEditTenant(auth, request.params.tenantId)) {
+      return response.status(403).json({ error: "You do not have permission to edit this tenant" });
+    }
+
     const parsed = destinationConfigsSchema.safeParse(request.body);
     if (!parsed.success) {
       return response.status(400).json({
@@ -174,6 +224,14 @@ export function createAdminRouter(container: AppContainer) {
   });
 
   router.put("/tenants/:tenantId/destination-scopes", async (request, response) => {
+    const auth = response.locals.auth;
+    if (!auth) {
+      return response.status(401).json({ error: "Authentication required" });
+    }
+    if (!container.userAuthService.canEditTenant(auth, request.params.tenantId)) {
+      return response.status(403).json({ error: "You do not have permission to edit this tenant" });
+    }
+
     const parsed = destinationScopeSchema.safeParse(request.body);
     if (!parsed.success) {
       return response.status(400).json({
@@ -195,6 +253,14 @@ export function createAdminRouter(container: AppContainer) {
   });
 
   router.delete("/tenants/:tenantId/destination-scopes", async (request, response) => {
+    const auth = response.locals.auth;
+    if (!auth) {
+      return response.status(401).json({ error: "Authentication required" });
+    }
+    if (!container.userAuthService.canEditTenant(auth, request.params.tenantId)) {
+      return response.status(403).json({ error: "You do not have permission to edit this tenant" });
+    }
+
     const scopeType = String(request.query.scopeType ?? "");
     const scopeId = String(request.query.scopeId ?? "");
 
@@ -218,18 +284,41 @@ export function createAdminRouter(container: AppContainer) {
   });
 
   router.get("/installations", async (_request, response) => {
-    response.json(await container.platformService.listInstallations());
+    const auth = response.locals.auth;
+    if (!auth) {
+      return response.status(401).json({ error: "Authentication required" });
+    }
+
+    response.json(
+      await container.platformService.listInstallations(
+        auth.canManageAllTenants ? undefined : auth.accessibleTenantIds
+      )
+    );
   });
 
   router.get("/diagnostics/events", async (request, response) => {
+    const auth = response.locals.auth;
+    if (!auth) {
+      return response.status(401).json({ error: "Authentication required" });
+    }
     const tenantId = request.query.tenantId ? String(request.query.tenantId) : undefined;
+    if (tenantId && !container.userAuthService.canViewTenant(auth, tenantId)) {
+      return response.status(403).json({ error: "You do not have access to this tenant" });
+    }
     response.json(await container.platformService.getEventDiagnostics(tenantId));
   });
 
   router.get("/analytics/commerce", async (request, response) => {
+    const auth = response.locals.auth;
+    if (!auth) {
+      return response.status(401).json({ error: "Authentication required" });
+    }
     const tenantId = request.query.tenantId ? String(request.query.tenantId) : "";
     if (!tenantId) {
       return response.status(400).json({ error: "tenantId is required" });
+    }
+    if (!container.userAuthService.canViewTenant(auth, tenantId)) {
+      return response.status(403).json({ error: "You do not have access to this tenant" });
     }
 
     const tenant = await container.platformService.getTenantDetail(tenantId);

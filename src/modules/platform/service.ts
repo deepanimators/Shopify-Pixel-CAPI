@@ -15,7 +15,7 @@ export class PlatformService {
     private readonly authService: ShopifyAuthService
   ) {}
 
-  async getOverview() {
+  async getOverview(tenantIds?: string[]) {
     const [tenants, installations, recentEvents, recentWebhooks] = await Promise.all([
       this.platformRepository.listTenants(),
       this.platformRepository.listInstallations(),
@@ -23,36 +23,66 @@ export class PlatformService {
       this.platformRepository.listWebhooks(8)
     ]);
 
-    const totalDomains = tenants.reduce(
+    const allowedTenantIds = tenantIds?.length ? new Set(tenantIds) : null;
+    const filteredTenants = allowedTenantIds
+      ? tenants.filter((tenant) => allowedTenantIds.has(tenant.tenantId))
+      : tenants;
+    const filteredInstallations = allowedTenantIds
+      ? installations.filter((installation) => allowedTenantIds.has(installation.tenantId))
+      : installations;
+    const allowedShopDomains = new Set(filteredInstallations.map((installation) => installation.shopDomain));
+    const filteredRecentEvents = allowedTenantIds
+      ? recentEvents.filter((event) => allowedTenantIds.has(event.tenantId))
+      : recentEvents;
+    const filteredWebhooks = allowedTenantIds
+      ? recentWebhooks.filter((receipt) => allowedShopDomains.has(receipt.shopDomain))
+      : recentWebhooks;
+    const trackedEvents = allowedTenantIds
+      ? (
+          await Promise.all(
+            [...allowedTenantIds].map((tenantId) => this.eventRepository.countByTenant(tenantId))
+          )
+        ).reduce((sum, count) => sum + count, 0)
+      : await this.eventRepository.count();
+
+    const totalDomains = filteredTenants.reduce(
       (sum, tenant) => sum + tenant.supportedDomains.length,
       0
     );
-    const totalMarkets = tenants.reduce(
+    const totalMarkets = filteredTenants.reduce(
       (sum, tenant) => sum + tenant.supportedMarkets.length,
       0
     );
 
     return {
       summary: {
-        tenants: tenants.length,
-        installedShops: installations.filter((installation) => installation.status === "installed")
+        tenants: filteredTenants.length,
+        installedShops: filteredInstallations.filter((installation) => installation.status === "installed")
           .length,
         domains: totalDomains,
         markets: totalMarkets,
-        trackedEvents: await this.eventRepository.count()
+        trackedEvents
       },
-      tenants: await Promise.all(tenants.map((tenant) => this.toTenantCard(tenant))),
+      tenants: await Promise.all(filteredTenants.map((tenant) => this.toTenantCard(tenant))),
       plans: this.billingService.listPlans(),
-      diagnostics: await this.getEventDiagnostics(),
-      recentEvents,
-      recentWebhooks
+      diagnostics: await this.getEventDiagnostics(
+        allowedTenantIds && allowedTenantIds.size === 1
+          ? [...allowedTenantIds][0]
+          : undefined
+      ),
+      recentEvents: filteredRecentEvents,
+      recentWebhooks: filteredWebhooks
     };
   }
 
-  async listTenants() {
+  async listTenants(tenantIds?: string[]) {
     const tenants = await this.platformRepository.listTenants();
+    const allowedTenantIds = tenantIds?.length ? new Set(tenantIds) : null;
+    const filteredTenants = allowedTenantIds
+      ? tenants.filter((tenant) => allowedTenantIds.has(tenant.tenantId))
+      : tenants;
 
-    return Promise.all(tenants.map((tenant) => this.toTenantCard(tenant)));
+    return Promise.all(filteredTenants.map((tenant) => this.toTenantCard(tenant)));
   }
 
   async getTenantDetail(tenantId: string) {
@@ -119,8 +149,14 @@ export class PlatformService {
     return this.platformRepository.deleteDestinationScope(tenantId, scopeType, scopeId);
   }
 
-  async listInstallations() {
-    return this.platformRepository.listInstallations();
+  async listInstallations(tenantIds?: string[]) {
+    const installations = await this.platformRepository.listInstallations();
+    if (!tenantIds?.length) {
+      return installations;
+    }
+
+    const allowedTenantIds = new Set(tenantIds);
+    return installations.filter((installation) => allowedTenantIds.has(installation.tenantId));
   }
 
   async getEventDiagnostics(tenantId?: string) {
