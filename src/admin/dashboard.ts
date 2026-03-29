@@ -92,7 +92,8 @@ export function renderDashboard() {
       .hero-actions,
       .row,
       .tenant-meta,
-      .metric-strip {
+      .metric-strip,
+      .tab-bar {
         display: flex;
         gap: 12px;
         flex-wrap: wrap;
@@ -141,6 +142,17 @@ export function renderDashboard() {
         color: var(--accent);
       }
 
+      .tab-button {
+        background: rgba(255,255,255,0.78);
+        color: var(--muted);
+        border: 1px solid var(--line);
+      }
+
+      .tab-button.is-active {
+        background: var(--text);
+        color: white;
+      }
+
       label {
         display: block;
         margin-bottom: 8px;
@@ -182,6 +194,14 @@ export function renderDashboard() {
         border-radius: 18px;
         padding: 14px;
         background: rgba(255,255,255,0.68);
+      }
+
+      [data-tab-panel] {
+        display: none;
+      }
+
+      [data-tab-panel].is-active {
+        display: grid;
       }
 
       .pill {
@@ -373,8 +393,18 @@ export function renderDashboard() {
         </aside>
       </section>
 
+      <section class="card" style="margin-top: 18px;">
+        <div class="tab-bar">
+          <button class="button tab-button is-active" data-tab="overview">Overview</button>
+          <button class="button tab-button" data-tab="commerce">Commerce</button>
+          <button class="button tab-button" data-tab="tracking">Tracking</button>
+          <button class="button tab-button" data-tab="destinations">Destinations</button>
+          <button class="button tab-button" data-tab="installs">Installs</button>
+        </div>
+      </section>
+
       <section class="grid">
-        <article class="card span-4 stack">
+        <article class="card span-4 stack is-active" data-tab-panel="overview">
           <div>
             <h2>Tenant Workspace</h2>
             <p class="muted">Choose the merchant whose tracking rules and destinations you want to manage.</p>
@@ -402,7 +432,7 @@ export function renderDashboard() {
           <div class="status" id="workspaceStatus"></div>
         </article>
 
-        <article class="card span-8 stack">
+        <article class="card span-8 stack is-active" data-tab-panel="overview commerce">
           <div>
             <h2>Commerce Pulse</h2>
             <p class="muted">A merchant-facing view of tracked products, purchases, orders, and delivery health across connected destinations.</p>
@@ -411,7 +441,7 @@ export function renderDashboard() {
           <div class="commerce-list" id="destinationBreakdown"></div>
         </article>
 
-        <article class="card span-6 stack">
+        <article class="card span-6 stack" data-tab-panel="commerce">
           <div>
             <h2>Top Products</h2>
             <p class="muted">See which products are being viewed, added to cart, purchased, and successfully delivered to destinations.</p>
@@ -426,7 +456,7 @@ export function renderDashboard() {
           <div class="commerce-list" id="productList"></div>
         </article>
 
-        <article class="card span-6 stack">
+        <article class="card span-6 stack" data-tab-panel="commerce">
           <div>
             <h2>Recent Purchases</h2>
             <p class="muted">Recent purchase events and whether they were delivered, skipped, previewed, or need attention.</p>
@@ -441,7 +471,7 @@ export function renderDashboard() {
           <div class="commerce-list" id="purchaseList"></div>
         </article>
 
-        <article class="card span-12 stack">
+        <article class="card span-12 stack" data-tab-panel="commerce">
           <div>
             <h2>Order Tracking Status</h2>
             <p class="muted">Track checkout progression and purchase delivery health by order from inside this admin.</p>
@@ -456,7 +486,7 @@ export function renderDashboard() {
           <div class="order-list" id="orderList"></div>
         </article>
 
-        <article class="card span-8 stack">
+        <article class="card span-8 stack" data-tab-panel="tracking">
           <div>
             <h2>Scenario Manager</h2>
             <p class="muted">
@@ -471,7 +501,7 @@ export function renderDashboard() {
           </div>
         </article>
 
-        <article class="card span-6 stack">
+        <article class="card span-6 stack" data-tab-panel="tracking">
           <div>
             <h2>Custom Mapping</h2>
             <p class="muted">
@@ -499,7 +529,7 @@ export function renderDashboard() {
           </div>
         </article>
 
-        <article class="card span-6 stack">
+        <article class="card span-6 stack" data-tab-panel="destinations">
           <div>
             <h2>Destinations</h2>
             <p class="muted">
@@ -579,22 +609,42 @@ export function renderDashboard() {
           </div>
         </article>
 
-        <article class="card span-12 stack">
+        <article class="card span-12 stack is-active" data-tab-panel="overview destinations">
           <div>
             <h2>Recent Delivery Diagnostics</h2>
             <p class="muted">Latest normalized events and destination delivery outcomes.</p>
           </div>
           <div class="event-list" id="eventList"></div>
         </article>
+
+        <article class="card span-12 stack" data-tab-panel="installs">
+          <div>
+            <h2>Store Installations</h2>
+            <p class="muted">
+              Every Shopify install is stored in the backend tenant registry. Use this view to confirm which stores have installed,
+              what status they are in, and whether the control plane has a real workspace for them.
+            </p>
+          </div>
+          <div class="table-head order-grid">
+            <span>Store</span>
+            <span>Tenant</span>
+            <span>Status</span>
+            <span>Scopes</span>
+            <span>Installed</span>
+          </div>
+          <div class="order-list" id="installationList"></div>
+        </article>
       </section>
     </main>
     <script>
       let state = {
         overview: null,
+        installations: [],
         scenarios: [],
         tenantId: null,
         tenantDetail: null,
         commerceAnalytics: null,
+        activeTab: 'overview',
         destinationScopeType: 'tenant',
         destinationDomainHost: null,
         destinationMarketId: null
@@ -610,13 +660,21 @@ export function renderDashboard() {
       }
 
       async function loadOverview() {
-        const [overview, scenarioRegistry] = await Promise.all([
+        const [overview, scenarioRegistry, installations] = await Promise.all([
           fetchJson('/api/admin/overview'),
-          fetchJson('/api/admin/scenarios')
+          fetchJson('/api/admin/scenarios'),
+          fetchJson('/api/admin/installations')
         ]);
 
         state.overview = overview;
+        state.installations = installations;
         state.scenarios = scenarioRegistry.scenarios;
+
+        const params = new URLSearchParams(window.location.search);
+        const tenantFromUrl = params.get('tenant');
+        if (tenantFromUrl) {
+          state.tenantId = tenantFromUrl;
+        }
 
         document.getElementById('metricTenants').textContent = overview.summary.tenants;
         document.getElementById('metricEvents').textContent = overview.summary.trackedEvents;
@@ -639,8 +697,11 @@ export function renderDashboard() {
         tenantSelect.value = state.tenantId || '';
 
         renderRecentEvents(overview.recentEvents || []);
+        renderInstallations(state.installations || []);
+        applyActiveTab();
         if (!overview.tenants.length) {
           document.getElementById('workspaceStatus').textContent = 'Install the app in a Shopify store to load real domains, markets, and destination scopes.';
+          renderEmptyWorkspace();
           return;
         }
 
@@ -673,6 +734,72 @@ export function renderDashboard() {
         renderDestinationScopeControls(tenant);
         renderDestinations(tenant);
         renderCommerceAnalytics(commerceAnalytics);
+      }
+
+      function renderInstallations(installations) {
+        const container = document.getElementById('installationList');
+        container.innerHTML = installations.length
+          ? installations.map((installation) => \`
+              <div class="item table-row order-grid">
+                <div>
+                  <strong>\${escapeHtml(installation.shopDomain)}</strong>
+                  <div class="muted">\${installation.accessToken ? 'Offline token stored' : 'Token pending'}</div>
+                </div>
+                <span>\${escapeHtml(installation.tenantId)}</span>
+                <span>\${statusBadge(installation.status)}</span>
+                <span>\${escapeHtml((installation.scopes || []).join(', ') || 'No scopes')}</span>
+                <span>\${formatDate(installation.installedAt)}</span>
+              </div>
+            \`).join('')
+          : '<div class="item"><strong>No installs yet</strong><div class="muted">Once a Shopify store completes OAuth, it will appear here and be stored in the backend registry.</div></div>';
+      }
+
+      function renderEmptyWorkspace() {
+        document.getElementById('tenantName').textContent = '--';
+        document.getElementById('tenantPlan').textContent = '--';
+        document.getElementById('tenantShop').textContent = '--';
+        document.getElementById('tenantDomains').textContent = '-- domains';
+        document.getElementById('tenantMarkets').textContent = '-- markets';
+        document.getElementById('tenantEnabledScenarios').textContent = '-- scenarios enabled';
+        document.getElementById('mappingCount').textContent = '0 mappings configured';
+
+        document.getElementById('scenarioChecklist').innerHTML =
+          '<div class="item"><strong>No tenant selected</strong><div class="muted">Scenario controls will appear after a Shopify store install is saved in the backend.</div></div>';
+        document.getElementById('mappingList').innerHTML =
+          '<div class="item"><strong>No tenant selected</strong><div class="muted">Custom event mappings are managed per installed store.</div></div>';
+        document.getElementById('destinationScopeType').value = 'tenant';
+        document.getElementById('destinationDomainSelect').innerHTML = '<option value="">No domains synced</option>';
+        document.getElementById('destinationMarketSelect').innerHTML = '<option value="">No markets synced</option>';
+        document.getElementById('destinationDomainSelect').disabled = true;
+        document.getElementById('destinationMarketSelect').disabled = true;
+        document.getElementById('destinationScopeBadge').textContent = 'No tenant selected';
+        document.getElementById('destinationScopeHint').textContent =
+          'Destination configuration will appear after the first real Shopify install is stored in the backend.';
+        document.getElementById('resetDestinationScopeButton').style.display = 'none';
+        document.getElementById('destinationStatus').textContent = '';
+
+        document.getElementById('metaEnabled').checked = false;
+        document.getElementById('metaPixelId').value = '';
+        document.getElementById('metaAccessToken').value = '';
+        document.getElementById('metaTestCode').value = '';
+        document.getElementById('ga4Enabled').checked = false;
+        document.getElementById('ga4MeasurementId').value = '';
+        document.getElementById('ga4ApiSecret').value = '';
+        document.getElementById('googleAdsEnabled').checked = false;
+        document.getElementById('googleAdsCustomerId').value = '';
+        document.getElementById('googleAdsConversionActionId').value = '';
+        document.getElementById('googleAdsTransport').value = 'preview';
+        document.getElementById('tiktokEnabled').checked = false;
+        document.getElementById('tiktokPixelCode').value = '';
+        document.getElementById('tiktokAccessToken').value = '';
+
+        renderCommerceAnalytics({
+          summary: {},
+          destinationBreakdown: [],
+          topProducts: [],
+          recentPurchases: [],
+          orderStatuses: []
+        });
       }
 
       function renderScenarioChecklist(tenant) {
@@ -998,6 +1125,17 @@ export function renderDashboard() {
         }
       }
 
+      function applyActiveTab() {
+        document.querySelectorAll('[data-tab]').forEach((button) => {
+          button.classList.toggle('is-active', button.getAttribute('data-tab') === state.activeTab);
+        });
+
+        document.querySelectorAll('[data-tab-panel]').forEach((panel) => {
+          const tabs = (panel.getAttribute('data-tab-panel') || '').split(/\s+/).filter(Boolean);
+          panel.classList.toggle('is-active', tabs.includes(state.activeTab));
+        });
+      }
+
       function escapeHtml(value) {
         return String(value ?? '')
           .replaceAll('&', '&amp;')
@@ -1165,6 +1303,12 @@ export function renderDashboard() {
 
       document.getElementById('refreshButton').addEventListener('click', loadOverview);
       document.getElementById('copyInstallLinkButton').addEventListener('click', createInstallLink);
+      document.querySelectorAll('[data-tab]').forEach((button) => {
+        button.addEventListener('click', () => {
+          state.activeTab = button.getAttribute('data-tab');
+          applyActiveTab();
+        });
+      });
       document.getElementById('tenantSelect').addEventListener('change', async (event) => {
         state.tenantId = event.target.value;
         await loadTenantDetail();

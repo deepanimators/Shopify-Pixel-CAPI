@@ -67,6 +67,7 @@ export class ShopifyAuthService {
 
     return {
       shop,
+      tenantId: installation.tenantId,
       state,
       accessToken,
       status: accessToken ? "installed" : "pending_configuration"

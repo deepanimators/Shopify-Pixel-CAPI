@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { ShopifyAuthService } from "../src/modules/shopify/auth.js";
 import { isValidShopDomain, normalizeShopDomain } from "../src/modules/shopify/hmac.js";
 import { InMemoryPlatformRepository } from "../src/modules/platform/repository.js";
-import { createSeedPlatformData } from "../src/modules/platform/seed.js";
+import { createEmptyPlatformData, createSeedPlatformData } from "../src/modules/platform/seed.js";
 
 describe("shopify auth helpers", () => {
   it("normalizes and validates shop domains", () => {
@@ -31,5 +31,29 @@ describe("shopify auth helpers", () => {
     expect(() => service.createInstallStart("not-a-shop-domain")).toThrow(
       "Shop domain must be a valid *.myshopify.com domain"
     );
+  });
+
+  it("creates a tenant workspace when a new install is saved", async () => {
+    const repository = new InMemoryPlatformRepository(createEmptyPlatformData());
+
+    await repository.saveInstallation({
+      shopDomain: "fresh-store.myshopify.com",
+      tenantId: "fresh-store",
+      accessToken: "offline-token",
+      scopes: ["read_orders", "read_markets"],
+      status: "installed",
+      installedAt: "2026-03-29T12:00:00.000Z"
+    });
+
+    const tenant = await repository.getTenant("fresh-store");
+
+    expect(tenant?.shopDomain).toBe("fresh-store.myshopify.com");
+    expect(tenant?.supportedDomains).toEqual([
+      {
+        host: "fresh-store.myshopify.com",
+        primary: true
+      }
+    ]);
+    expect(tenant?.destinationScopes).toEqual([]);
   });
 });

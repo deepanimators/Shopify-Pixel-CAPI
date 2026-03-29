@@ -6,6 +6,7 @@ export interface InstallStart {
 
 export interface AuthCallbackResult {
   shop: string;
+  tenantId: string;
   state: string;
   accessToken?: string;
   status: "installed" | "pending_configuration";
