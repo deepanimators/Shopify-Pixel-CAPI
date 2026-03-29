@@ -13,12 +13,57 @@ export interface TenantDomain {
   marketId?: string;
 }
 
-export interface MetaConnection {
+export interface DestinationConnectionBase {
+  enabled: boolean;
+  lastValidatedAt?: string;
+}
+
+export interface MetaConnection extends DestinationConnectionBase {
   pixelId: string;
   accessToken: string;
   testEventCode?: string;
+}
+
+export interface Ga4Connection extends DestinationConnectionBase {
+  measurementId: string;
+  apiSecret: string;
+  debugMode?: boolean;
+}
+
+export interface GoogleAdsConnection extends DestinationConnectionBase {
+  customerId: string;
+  conversionActionId: string;
+  loginCustomerId?: string;
+  developerToken?: string;
+  refreshToken?: string;
+  clientId?: string;
+  clientSecret?: string;
+  transport?: "preview" | "api";
+}
+
+export interface TikTokConnection extends DestinationConnectionBase {
+  pixelCode: string;
+  accessToken?: string;
+  testEventCode?: string;
+  endpoint?: string;
+}
+
+export interface DestinationConfigs {
+  meta?: MetaConnection;
+  ga4?: Ga4Connection;
+  googleAds?: GoogleAdsConnection;
+  tiktok?: TikTokConnection;
+}
+
+export interface CustomEventMapping {
+  sourceName: string;
+  scenarioId: string;
   enabled: boolean;
-  lastValidatedAt?: string;
+}
+
+export interface TenantTrackingConfig {
+  enabledScenarioIds: string[];
+  customEventMappings: CustomEventMapping[];
 }
 
 export interface Tenant {
@@ -29,7 +74,8 @@ export interface Tenant {
   status: "active" | "trial" | "disabled";
   supportedDomains: TenantDomain[];
   supportedMarkets: TenantMarket[];
-  meta?: MetaConnection;
+  destinations: DestinationConfigs;
+  tracking: TenantTrackingConfig;
   createdAt: string;
   updatedAt: string;
 }

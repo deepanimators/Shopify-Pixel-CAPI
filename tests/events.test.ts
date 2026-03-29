@@ -152,6 +152,90 @@ describe("admin route", () => {
     expect(response.body.scenarios.length).toBeGreaterThan(5);
   });
 
+  it("persists per-tenant tracking config and custom mappings", async () => {
+    const app = createApp(createContainer());
+
+    const response = await request(app).put("/api/admin/tenants/global-fashion/tracking").send({
+      enabledScenarioIds: ["page_view", "purchase", "remove_from_cart"],
+      customEventMappings: [
+        {
+          sourceName: "breeze_purchase",
+          scenarioId: "purchase",
+          enabled: true
+        }
+      ]
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body.tracking.enabledScenarioIds).toEqual([
+      "page_view",
+      "purchase",
+      "remove_from_cart"
+    ]);
+    expect(response.body.tracking.customEventMappings).toHaveLength(1);
+  });
+
+  it("rejects unknown scenario ids in custom mappings", async () => {
+    const app = createApp(createContainer());
+
+    const response = await request(app).put("/api/admin/tenants/global-fashion/tracking").send({
+      enabledScenarioIds: ["page_view"],
+      customEventMappings: [
+        {
+          sourceName: "weird_event_name",
+          scenarioId: "not_real",
+          enabled: true
+        }
+      ]
+    });
+
+    expect(response.status).toBe(400);
+    expect(JSON.stringify(response.body.issues)).toContain("Unknown scenarioId");
+  });
+
+  it("updates destination config without replacing other destinations", async () => {
+    const app = createApp(createContainer());
+
+    const response = await request(app)
+      .put("/api/admin/tenants/global-fashion/destinations")
+      .send({
+        ga4: {
+          enabled: true,
+          measurementId: "G-UPDATED123",
+          apiSecret: "updated-secret"
+        }
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.destinations.ga4.enabled).toBe(true);
+    expect(response.body.destinations.ga4.measurementId).toBe("G-UPDATED123");
+    expect(response.body.destinations.meta).toBeDefined();
+    expect(response.body.destinations.tiktok).toBeDefined();
+  });
+
+  it("allows merchants to disable destinations without placeholder credentials", async () => {
+    const app = createApp(createContainer());
+
+    const response = await request(app)
+      .put("/api/admin/tenants/global-fashion/destinations")
+      .send({
+        meta: {
+          enabled: false,
+          pixelId: "",
+          accessToken: ""
+        },
+        tiktok: {
+          enabled: false,
+          pixelCode: ""
+        }
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.destinations.meta.enabled).toBe(false);
+    expect(response.body.destinations.meta.pixelId).toBe("");
+    expect(response.body.destinations.tiktok.enabled).toBe(false);
+  });
+
   it("returns diagnostics breakdowns", async () => {
     const container = createContainer();
     const app = createApp(container);
@@ -183,6 +267,170 @@ describe("admin route", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.byCanonicalEvent[0].name).toBe("product_view");
+  });
+
+  it("uses tenant custom mappings to normalize merchant event names", async () => {
+    const container = createContainer();
+    const app = createApp(container);
+
+    await request(app).put("/api/admin/tenants/global-fashion/tracking").send({
+      enabledScenarioIds: ["page_view", "purchase"],
+      customEventMappings: [
+        {
+          sourceName: "breeze_purchase",
+          scenarioId: "purchase",
+          enabled: true
+        }
+      ]
+    });
+
+    const response = await request(app).post("/api/events").send({
+      shopDomain: "global-fashion.myshopify.com",
+      eventName: "custom:merchant_event",
+      source: "browser",
+      eventId: "evt_custom_purchase",
+      market: {
+        countryCode: "IN",
+        currencyCode: "INR",
+        marketId: "in",
+        domain: "example.in"
+      },
+      user: {
+        anonymousId: "anon_custom"
+      },
+      commerce: {
+        orderId: "order_custom",
+        value: 1449,
+        currency: "INR"
+      },
+      properties: {
+        rawEventName: "breeze_purchase"
+      },
+      page: {
+        url: "https://example.in/checkout/complete"
+      }
+    });
+
+    expect(response.status).toBe(202);
+    expect(response.body.event.scenarioId).toBe("purchase");
+    expect(response.body.event.canonicalEvent).toBe("purchase");
+  });
+
+  it("returns commerce analytics for products, purchases, and tracked orders", async () => {
+    const app = createApp(createContainer());
+
+    await request(app).post("/api/events").send({
+      shopDomain: "global-fashion.myshopify.com",
+      eventName: "product_viewed",
+      source: "browser",
+      eventId: "analytics_view_1",
+      market: {
+        countryCode: "IN",
+        currencyCode: "INR",
+        marketId: "in",
+        domain: "example.in"
+      },
+      user: {
+        anonymousId: "anon_analytics"
+      },
+      lineItems: [
+        {
+          productId: "prod_dashboard_1",
+          title: "AD Print 1 Year",
+          price: 1449,
+          quantity: 1,
+          currency: "INR"
+        }
+      ],
+      page: {
+        url: "https://example.in/products/ad-print"
+      }
+    });
+
+    await request(app).post("/api/events").send({
+      shopDomain: "global-fashion.myshopify.com",
+      eventName: "product_added_to_cart",
+      source: "browser",
+      eventId: "analytics_cart_1",
+      market: {
+        countryCode: "IN",
+        currencyCode: "INR",
+        marketId: "in",
+        domain: "example.in"
+      },
+      user: {
+        anonymousId: "anon_analytics"
+      },
+      commerce: {
+        cartId: "cart_dashboard_1",
+        value: 1449,
+        currency: "INR"
+      },
+      lineItems: [
+        {
+          productId: "prod_dashboard_1",
+          title: "AD Print 1 Year",
+          price: 1449,
+          quantity: 1,
+          currency: "INR"
+        }
+      ],
+      page: {
+        url: "https://example.in/cart"
+      }
+    });
+
+    await request(app).post("/api/events").send({
+      shopDomain: "global-fashion.myshopify.com",
+      eventName: "checkout_completed",
+      source: "browser",
+      eventId: "analytics_purchase_1",
+      market: {
+        countryCode: "IN",
+        currencyCode: "INR",
+        marketId: "in",
+        domain: "example.in"
+      },
+      user: {
+        anonymousId: "anon_analytics",
+        email: "buyer@example.com"
+      },
+      commerce: {
+        orderId: "order_dashboard_1",
+        value: 1449,
+        currency: "INR"
+      },
+      lineItems: [
+        {
+          productId: "prod_dashboard_1",
+          title: "AD Print 1 Year",
+          price: 1449,
+          quantity: 1,
+          currency: "INR"
+        }
+      ],
+      page: {
+        url: "https://example.in/checkout/complete"
+      }
+    });
+
+    const response = await request(app).get("/api/admin/analytics/commerce?tenantId=global-fashion");
+
+    expect(response.status).toBe(200);
+    expect(response.body.summary.purchases).toBeGreaterThanOrEqual(1);
+    expect(response.body.summary.revenue).toBeGreaterThanOrEqual(1449);
+    expect(response.body.topProducts[0].productId).toBe("prod_dashboard_1");
+    expect(response.body.recentPurchases[0].orderId).toBe("order_dashboard_1");
+    expect(response.body.orderStatuses[0].orderId).toBe("order_dashboard_1");
+  });
+
+  it("requires tenantId for commerce analytics", async () => {
+    const app = createApp(createContainer());
+
+    const response = await request(app).get("/api/admin/analytics/commerce");
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toContain("tenantId");
   });
 });
 

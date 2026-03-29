@@ -1076,6 +1076,12 @@ export const EVENT_SCENARIOS: EventScenario[] = [
   )
 ];
 
+const SCENARIO_BY_ID = new Map(EVENT_SCENARIOS.map((scenario) => [scenario.id, scenario]));
+
+export function getScenarioById(id: string) {
+  return SCENARIO_BY_ID.get(id) ?? null;
+}
+
 export function scenarioSummary() {
   const byCategory = Object.entries(
     EVENT_SCENARIOS.reduce<Record<string, number>>((accumulator, scenario) => {

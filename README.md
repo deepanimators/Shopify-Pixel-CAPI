@@ -5,6 +5,7 @@ AdTrace Enterprise is a Shopify-first tracking and attribution platform for merc
 This repository now models the app as a real Shopify product:
 
 - an embedded admin surface for onboarding and diagnostics
+- merchant-facing product, purchase, and order tracking dashboards
 - a multi-tenant backend for shops, domains, markets, and identities
 - server-side event ingestion and Meta Conversion API delivery
 - Shopify OAuth, billing plan catalog, and compliance webhook handling
@@ -29,8 +30,9 @@ For each Shopify merchant, the platform can:
 - enrich events with domain and market context
 - unify shopper identity across sessions and domains
 - deduplicate browser and server copies of the same event
-- send clean conversion data to Meta first
+- send clean conversion data to Meta, GA4, Google Ads, and TikTok
 - expose diagnostics through an operator-friendly admin dashboard
+- let merchants monitor tracked products, recent purchases, order status, and destination delivery health without leaving the app
 
 ## Enterprise App Scope
 
@@ -105,7 +107,9 @@ Each merchant installation is represented as a tenant profile containing:
 - plan
 - supported markets
 - supported storefront domains
-- Meta connection details
+- destination adapter settings
+- enabled scenario set
+- custom event mappings
 
 ### 2. Multi-Market Awareness
 
@@ -194,6 +198,24 @@ Use:
 
 - `GET /api/admin/scenarios`
 
+### 9. Merchant Mapping Workspace
+
+The embedded dashboard now lets each merchant:
+
+- enable only the scenarios they actually use
+- map custom `dataLayer`, GTM, or iframe event names into canonical scenarios
+- configure destination adapters for Meta, GA4, Google Ads, and TikTok
+- inspect recent normalized delivery outcomes
+
+### 10. Commerce Operations Dashboard
+
+The admin now also includes merchant-facing tracking views for:
+
+- top tracked products by views, carts, purchases, and revenue
+- recent purchases with delivery health across connected destinations
+- tracked orders with checkout timeline and delivery status
+- purchase delivery breakdown by destination
+
 ## API Overview
 
 ### Health
@@ -219,6 +241,8 @@ GET /api/admin/overview
 ```bash
 GET /api/admin/tenants/:tenantId
 PUT /api/admin/tenants/:tenantId/meta
+PUT /api/admin/tenants/:tenantId/tracking
+PUT /api/admin/tenants/:tenantId/destinations
 ```
 
 ### Shopify install

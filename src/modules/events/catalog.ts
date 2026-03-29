@@ -1,5 +1,6 @@
-import { EVENT_SCENARIOS } from "./scenarios.js";
+import { EVENT_SCENARIOS, getScenarioById } from "./scenarios.js";
 import type { CanonicalEventName, EventName } from "./types.js";
+import type { CustomEventMapping, TenantTrackingConfig } from "../platform/types.js";
 
 export const SHOPIFY_STANDARD_EVENTS = [
   "page_viewed",
@@ -79,6 +80,41 @@ export function toCanonicalEventName(eventName: EventName): CanonicalEventName {
   }
 
   return SCENARIO_ALIAS_MAP.get(normalizeEventKey(eventName)) ?? "custom_event";
+}
+
+export function resolveScenario(eventName: string, tracking?: TenantTrackingConfig, rawEventName?: string) {
+  const customMatch = resolveCustomMapping(eventName, tracking?.customEventMappings, rawEventName);
+  if (customMatch) {
+    return customMatch;
+  }
+
+  const normalizedKey = normalizeEventKey(eventName);
+  const scenario = EVENT_SCENARIOS.find((candidate) =>
+    [candidate.recommendedEventName, ...candidate.aliases].some(
+      (alias) => normalizeEventKey(alias) === normalizedKey
+    )
+  );
+
+  return scenario ?? null;
+}
+
+function resolveCustomMapping(
+  eventName: string,
+  mappings?: CustomEventMapping[],
+  rawEventName?: string
+) {
+  if (!mappings?.length) {
+    return null;
+  }
+
+  const candidates = [eventName, rawEventName].filter(Boolean).map((value) => normalizeEventKey(String(value)));
+  const match = mappings.find(
+    (mapping) =>
+      mapping.enabled &&
+      candidates.includes(normalizeEventKey(mapping.sourceName))
+  );
+
+  return match ? getScenarioById(match.scenarioId) : null;
 }
 
 export function canonicalCategory(

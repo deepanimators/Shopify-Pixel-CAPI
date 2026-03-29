@@ -7,87 +7,127 @@ export function renderDashboard() {
     <title>AdTrace Enterprise</title>
     <style>
       :root {
-        --bg: #f7f3eb;
-        --panel: rgba(255,255,255,0.78);
-        --line: rgba(39, 34, 27, 0.08);
-        --text: #241d17;
-        --muted: #726457;
-        --accent: #0f6d5f;
-        --accent-soft: #d9f1eb;
-        --gold: #c5832d;
-        --shadow: 0 24px 60px rgba(57, 39, 16, 0.12);
+        --bg: #f5efe4;
+        --panel: rgba(255, 255, 255, 0.82);
+        --line: rgba(36, 29, 23, 0.1);
+        --text: #211912;
+        --muted: #6b5d4d;
+        --accent: #0b6b5c;
+        --accent-soft: #d6f1ea;
+        --warm: #b67625;
+        --shadow: 0 24px 60px rgba(54, 36, 17, 0.12);
       }
 
       * { box-sizing: border-box; }
       body {
         margin: 0;
         color: var(--text);
-        font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+        font-family: "Iowan Old Style", "Palatino Linotype", serif;
         background:
-          radial-gradient(circle at top left, rgba(197, 131, 45, 0.18), transparent 26%),
-          linear-gradient(135deg, #f7f3eb 0%, #f0ece2 45%, #efe6da 100%);
+          radial-gradient(circle at top left, rgba(182, 118, 37, 0.18), transparent 22%),
+          linear-gradient(145deg, #f8f4ee 0%, #efe8dc 48%, #efe4d6 100%);
       }
 
       .shell {
-        max-width: 1240px;
+        max-width: 1360px;
         margin: 0 auto;
-        padding: 32px 20px 56px;
+        padding: 28px 18px 64px;
+      }
+
+      .hero,
+      .grid {
+        display: grid;
+        gap: 18px;
       }
 
       .hero {
-        display: grid;
-        grid-template-columns: 1.2fr 0.8fr;
-        gap: 24px;
-        align-items: stretch;
+        grid-template-columns: 1.15fr 0.85fr;
       }
 
-      .hero-card,
-      .panel {
-        backdrop-filter: blur(10px);
+      .grid {
+        grid-template-columns: repeat(12, 1fr);
+        margin-top: 18px;
+      }
+
+      .card {
         background: var(--panel);
         border: 1px solid var(--line);
         box-shadow: var(--shadow);
-        border-radius: 28px;
+        border-radius: 26px;
+        padding: 22px;
+        backdrop-filter: blur(8px);
       }
 
-      .hero-card {
-        padding: 28px;
-      }
+      .span-4 { grid-column: span 4; }
+      .span-5 { grid-column: span 5; }
+      .span-6 { grid-column: span 6; }
+      .span-7 { grid-column: span 7; }
+      .span-8 { grid-column: span 8; }
+      .span-12 { grid-column: span 12; }
 
       .eyebrow {
-        font-family: "Avenir Next", "Segoe UI", sans-serif;
-        letter-spacing: 0.14em;
+        font: 700 12px/1.2 "Avenir Next", "Segoe UI", sans-serif;
         text-transform: uppercase;
+        letter-spacing: 0.14em;
         color: var(--accent);
-        font-size: 12px;
-        margin-bottom: 16px;
       }
 
+      h1, h2, h3, p { margin-top: 0; }
       h1 {
-        margin: 0;
-        font-size: clamp(2.2rem, 4vw, 4.4rem);
-        line-height: 0.92;
+        font-size: clamp(2.2rem, 4vw, 4.7rem);
+        line-height: 0.95;
+        margin: 14px 0 18px;
       }
 
-      .hero-copy {
-        font-size: 1.08rem;
-        line-height: 1.6;
+      h2 {
+        font-size: 1.45rem;
+        margin-bottom: 8px;
+      }
+
+      .muted {
         color: var(--muted);
-        max-width: 58ch;
-        margin: 18px 0 28px;
+        font: 500 0.96rem/1.55 "Avenir Next", "Segoe UI", sans-serif;
       }
 
-      .hero-actions {
+      .hero-actions,
+      .row,
+      .tenant-meta,
+      .metric-strip {
         display: flex;
         gap: 12px;
         flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .metric-strip {
+        margin-top: 14px;
+      }
+
+      .metric {
+        min-width: 150px;
+        padding: 16px;
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,0.7);
+      }
+
+      .metric-label {
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font: 700 11px/1.2 "Avenir Next", "Segoe UI", sans-serif;
+      }
+
+      .metric-value {
+        margin-top: 8px;
+        font-size: 1.95rem;
       }
 
       .button {
         border: 0;
         border-radius: 999px;
-        padding: 14px 18px;
-        font: 600 14px/1 "Avenir Next", "Segoe UI", sans-serif;
+        padding: 12px 16px;
+        font: 700 13px/1 "Avenir Next", "Segoe UI", sans-serif;
         cursor: pointer;
       }
 
@@ -101,137 +141,188 @@ export function renderDashboard() {
         color: var(--accent);
       }
 
-      .hero-metrics {
-        padding: 24px;
-        display: grid;
-        gap: 14px;
-      }
-
-      .metric {
-        padding: 16px 18px;
-        border-radius: 20px;
-        background: rgba(255,255,255,0.74);
-        border: 1px solid var(--line);
-      }
-
-      .metric-label {
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font: 700 12px/1.2 "Avenir Next", "Segoe UI", sans-serif;
         color: var(--muted);
-        font: 600 12px/1.2 "Avenir Next", "Segoe UI", sans-serif;
         text-transform: uppercase;
-        letter-spacing: 0.14em;
+        letter-spacing: 0.08em;
       }
 
-      .metric-value {
-        margin-top: 10px;
-        font-size: 2rem;
+      input,
+      select,
+      textarea {
+        width: 100%;
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,0.82);
+        padding: 12px 14px;
+        font: 500 14px/1.4 "Avenir Next", "Segoe UI", sans-serif;
+        color: var(--text);
       }
 
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(12, 1fr);
-        gap: 20px;
-        margin-top: 24px;
-      }
-
-      .panel {
-        padding: 24px;
-      }
-
-      .span-7 { grid-column: span 7; }
-      .span-5 { grid-column: span 5; }
-      .span-4 { grid-column: span 4; }
-      .span-8 { grid-column: span 8; }
-      .span-12 { grid-column: span 12; }
-
-      .section-title {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 18px;
-      }
-
-      .section-title h2 {
-        margin: 0;
-        font-size: 1.45rem;
-      }
-
-      .hint {
-        color: var(--muted);
-        font: 500 0.94rem/1.5 "Avenir Next", "Segoe UI", sans-serif;
-      }
-
-      .tenant-list,
-      .plan-list,
-      .event-list,
-      .webhook-list {
+      .stack {
         display: grid;
         gap: 14px;
       }
 
-      .tenant-card,
-      .plan-card,
-      .event-card,
-      .webhook-card {
-        border: 1px solid var(--line);
-        border-radius: 20px;
-        padding: 16px;
-        background: rgba(255,255,255,0.64);
+      .scenario-list,
+      .mapping-list,
+      .destination-list,
+      .event-list,
+      .commerce-list,
+      .order-list {
+        display: grid;
+        gap: 12px;
       }
 
-      .tenant-meta,
-      .event-meta,
-      .webhook-meta {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-top: 12px;
-        color: var(--muted);
-        font: 500 0.9rem/1.4 "Avenir Next", "Segoe UI", sans-serif;
+      .item {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 14px;
+        background: rgba(255,255,255,0.68);
       }
 
       .pill {
-        padding: 7px 10px;
+        display: inline-block;
+        padding: 6px 9px;
         border-radius: 999px;
-        background: rgba(15, 109, 95, 0.09);
+        background: rgba(11, 107, 92, 0.1);
         color: var(--accent);
         font: 700 11px/1 "Avenir Next", "Segoe UI", sans-serif;
         text-transform: uppercase;
         letter-spacing: 0.08em;
       }
 
-      .plan-price {
-        font-size: 2rem;
-        margin: 8px 0;
+      .checkbox-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        max-height: 420px;
+        overflow: auto;
+        padding-right: 4px;
       }
 
-      ul {
-        padding-left: 18px;
+      .checkbox-item {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(255,255,255,0.7);
+      }
+
+      .checkbox-item input {
+        width: auto;
+        margin-top: 2px;
+      }
+
+      .destination-card h3 {
+        margin-bottom: 6px;
+      }
+
+      .status {
+        min-height: 18px;
+        color: var(--accent);
+        font: 700 12px/1.4 "Avenir Next", "Segoe UI", sans-serif;
+      }
+
+      .mapping-row {
+        display: grid;
+        grid-template-columns: 1.1fr 1.2fr auto;
+        gap: 10px;
+        align-items: end;
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .summary-stat {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 14px;
+        background: rgba(255,255,255,0.7);
+      }
+
+      .summary-stat strong {
+        display: block;
+        font-size: 1.5rem;
+        margin-top: 6px;
+      }
+
+      .table-head,
+      .table-row {
+        display: grid;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .table-head {
         color: var(--muted);
+        font: 700 11px/1.2 "Avenir Next", "Segoe UI", sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
       }
 
-      code {
-        font-family: "SFMono-Regular", "Menlo", monospace;
-        font-size: 0.9em;
+      .product-grid,
+      .purchase-grid {
+        grid-template-columns: 1.8fr 0.8fr 0.8fr 0.8fr 0.8fr;
       }
 
-      .footer-note {
-        margin-top: 24px;
-        color: var(--muted);
-        font: 500 0.92rem/1.6 "Avenir Next", "Segoe UI", sans-serif;
+      .order-grid {
+        grid-template-columns: 1.4fr 1fr 0.9fr 1.2fr 0.9fr;
       }
 
-      @media (max-width: 980px) {
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font: 700 11px/1 "Avenir Next", "Segoe UI", sans-serif;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .badge-good {
+        background: rgba(11, 107, 92, 0.12);
+        color: var(--accent);
+      }
+
+      .badge-warn {
+        background: rgba(182, 118, 37, 0.16);
+        color: var(--warm);
+      }
+
+      .badge-bad {
+        background: rgba(158, 43, 43, 0.14);
+        color: #9e2b2b;
+      }
+
+      @media (max-width: 1080px) {
         .hero,
         .grid {
           grid-template-columns: 1fr;
         }
-        .span-7,
-        .span-5,
-        .span-4,
-        .span-8,
-        .span-12 {
+        .span-4, .span-5, .span-6, .span-7, .span-8, .span-12 {
           grid-column: auto;
+        }
+        .checkbox-grid {
+          grid-template-columns: 1fr;
+        }
+        .mapping-row {
+          grid-template-columns: 1fr;
+        }
+        .summary-grid,
+        .product-grid,
+        .purchase-grid,
+        .order-grid {
+          grid-template-columns: 1fr;
         }
       }
     </style>
@@ -239,163 +330,637 @@ export function renderDashboard() {
   <body>
     <main class="shell">
       <section class="hero">
-        <article class="hero-card">
-          <div class="eyebrow">Embedded Shopify Control Plane</div>
-          <h1>AdTrace Enterprise turns fragmented markets into one attribution system.</h1>
-          <p class="hero-copy">
-            This admin surface is designed for operators, growth teams, and solution architects.
-            It centralizes Shopify store installs, domain coverage, market mapping, Meta delivery,
-            webhook compliance, and tracking diagnostics in one merchant-facing application.
+        <article class="card">
+          <div class="eyebrow">Shopify Tracking Control Plane</div>
+          <h1>Map merchant dataLayer names into one canonical attribution model.</h1>
+          <p class="muted">
+            This embedded surface lets each merchant choose which tracking scenarios are enabled,
+            map their own raw event names into canonical ecommerce journeys, and configure
+            destination adapters for Meta, GA4, Google Ads, and TikTok from one place.
           </p>
           <div class="hero-actions">
-            <button class="button button-primary" id="refreshButton">Refresh telemetry</button>
+            <button class="button button-primary" id="refreshButton">Refresh workspace</button>
             <button class="button button-secondary" id="copyInstallLinkButton">Create install link</button>
           </div>
-          <p class="footer-note">
-            Publish flow: install via Shopify OAuth, activate web pixel, confirm billing, map domains and markets,
-            then validate Meta event quality before launch.
-          </p>
         </article>
-        <aside class="hero-metrics hero-card">
-          <div class="metric">
-            <div class="metric-label">Coverage</div>
-            <div class="metric-value" id="metric-tenants">--</div>
+        <aside class="card">
+          <div class="metric-strip">
+            <div class="metric">
+              <div class="metric-label">Tenants</div>
+              <div class="metric-value" id="metricTenants">--</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Tracked Events</div>
+              <div class="metric-value" id="metricEvents">--</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Scenarios</div>
+              <div class="metric-value" id="metricScenarios">--</div>
+            </div>
           </div>
-          <div class="metric">
-            <div class="metric-label">Installed Shops</div>
-            <div class="metric-value" id="metric-shops">--</div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Tracked Events</div>
-            <div class="metric-value" id="metric-events">--</div>
-          </div>
+          <p class="muted" id="summaryHint">
+            Loading current coverage, destinations, and tenant tracking configuration.
+          </p>
         </aside>
       </section>
 
       <section class="grid">
-        <article class="panel span-8">
-          <div class="section-title">
-            <h2>Tenants & Markets</h2>
-            <div class="hint">Multi-tenant rollout, market density, and Meta readiness</div>
+        <article class="card span-4 stack">
+          <div>
+            <h2>Tenant Workspace</h2>
+            <p class="muted">Choose the merchant whose tracking rules and destinations you want to manage.</p>
           </div>
-          <div class="tenant-list" id="tenantList"></div>
+          <div>
+            <label for="tenantSelect">Tenant</label>
+            <select id="tenantSelect"></select>
+          </div>
+          <div class="item">
+            <div class="row">
+              <strong id="tenantName">--</strong>
+              <span class="pill" id="tenantPlan">--</span>
+            </div>
+            <div class="tenant-meta muted">
+              <span id="tenantShop">--</span>
+              <span id="tenantDomains">-- domains</span>
+              <span id="tenantMarkets">-- markets</span>
+              <span id="tenantEnabledScenarios">-- scenarios enabled</span>
+            </div>
+          </div>
+          <div class="item">
+            <strong>Custom Event Mappings</strong>
+            <div class="muted" id="mappingCount">0 mappings configured</div>
+          </div>
+          <div class="status" id="workspaceStatus"></div>
         </article>
 
-        <article class="panel span-4">
-          <div class="section-title">
-            <h2>Plan Catalog</h2>
-            <div class="hint">Shopify Billing aligned tiers</div>
+        <article class="card span-8 stack">
+          <div>
+            <h2>Commerce Pulse</h2>
+            <p class="muted">A merchant-facing view of tracked products, purchases, orders, and delivery health across connected destinations.</p>
           </div>
-          <div class="plan-list" id="planList"></div>
+          <div class="summary-grid" id="commerceSummary"></div>
+          <div class="commerce-list" id="destinationBreakdown"></div>
         </article>
 
-        <article class="panel span-7">
-          <div class="section-title">
-            <h2>Recent Events</h2>
-            <div class="hint">Server-side ingestion snapshots</div>
+        <article class="card span-6 stack">
+          <div>
+            <h2>Top Products</h2>
+            <p class="muted">See which products are being viewed, added to cart, purchased, and successfully delivered to destinations.</p>
+          </div>
+          <div class="table-head product-grid">
+            <span>Product</span>
+            <span>Views</span>
+            <span>Adds</span>
+            <span>Purchases</span>
+            <span>Revenue</span>
+          </div>
+          <div class="commerce-list" id="productList"></div>
+        </article>
+
+        <article class="card span-6 stack">
+          <div>
+            <h2>Recent Purchases</h2>
+            <p class="muted">Recent purchase events and whether they were delivered, skipped, previewed, or need attention.</p>
+          </div>
+          <div class="table-head purchase-grid">
+            <span>Order</span>
+            <span>Value</span>
+            <span>Market</span>
+            <span>Quality</span>
+            <span>Status</span>
+          </div>
+          <div class="commerce-list" id="purchaseList"></div>
+        </article>
+
+        <article class="card span-12 stack">
+          <div>
+            <h2>Order Tracking Status</h2>
+            <p class="muted">Track checkout progression and purchase delivery health by order from inside this admin.</p>
+          </div>
+          <div class="table-head order-grid">
+            <span>Order</span>
+            <span>Timeline</span>
+            <span>Value</span>
+            <span>Tracking</span>
+            <span>Updated</span>
+          </div>
+          <div class="order-list" id="orderList"></div>
+        </article>
+
+        <article class="card span-8 stack">
+          <div>
+            <h2>Scenario Manager</h2>
+            <p class="muted">
+              Enable only the scenarios this merchant actually uses. Unknown dataLayer names can then be
+              explicitly mapped into these canonical journeys.
+            </p>
+          </div>
+          <div class="checkbox-grid" id="scenarioChecklist"></div>
+          <div class="row">
+            <button class="button button-primary" id="saveScenarioButton">Save enabled scenarios</button>
+            <span class="status" id="scenarioStatus"></span>
+          </div>
+        </article>
+
+        <article class="card span-6 stack">
+          <div>
+            <h2>Custom Mapping</h2>
+            <p class="muted">
+              Map raw merchant event names like <code>remove-from-cart</code> or
+              <code>breeze_checkout_initiated</code> to canonical scenarios.
+            </p>
+          </div>
+          <div class="mapping-row">
+            <div>
+              <label for="customSourceName">Raw event name</label>
+              <input id="customSourceName" placeholder="remove-from-cart" />
+            </div>
+            <div>
+              <label for="scenarioSelect">Canonical scenario</label>
+              <select id="scenarioSelect"></select>
+            </div>
+            <div>
+              <button class="button button-secondary" id="addMappingButton">Add mapping</button>
+            </div>
+          </div>
+          <div class="mapping-list" id="mappingList"></div>
+          <div class="row">
+            <button class="button button-primary" id="saveMappingsButton">Save mappings</button>
+            <span class="status" id="mappingStatus"></span>
+          </div>
+        </article>
+
+        <article class="card span-6 stack">
+          <div>
+            <h2>Destinations</h2>
+            <p class="muted">
+              Configure destination adapters. Meta and GA4 can deliver live with credentials. Google Ads and TikTok
+              can also store merchant configuration and payload previews.
+            </p>
+          </div>
+          <div class="destination-list">
+            <div class="item destination-card">
+              <h3>Meta</h3>
+              <div class="row"><input type="checkbox" id="metaEnabled" /> <span class="muted">Enabled</span></div>
+              <div class="stack">
+                <input id="metaPixelId" placeholder="Pixel ID" />
+                <input id="metaAccessToken" placeholder="Access token" />
+                <input id="metaTestCode" placeholder="Test event code" />
+              </div>
+            </div>
+            <div class="item destination-card">
+              <h3>GA4</h3>
+              <div class="row"><input type="checkbox" id="ga4Enabled" /> <span class="muted">Enabled</span></div>
+              <div class="stack">
+                <input id="ga4MeasurementId" placeholder="Measurement ID" />
+                <input id="ga4ApiSecret" placeholder="API secret" />
+              </div>
+            </div>
+            <div class="item destination-card">
+              <h3>Google Ads</h3>
+              <div class="row"><input type="checkbox" id="googleAdsEnabled" /> <span class="muted">Enabled</span></div>
+              <div class="stack">
+                <input id="googleAdsCustomerId" placeholder="Customer ID" />
+                <input id="googleAdsConversionActionId" placeholder="Conversion action ID" />
+                <select id="googleAdsTransport">
+                  <option value="preview">Preview</option>
+                  <option value="api">API</option>
+                </select>
+              </div>
+            </div>
+            <div class="item destination-card">
+              <h3>TikTok</h3>
+              <div class="row"><input type="checkbox" id="tiktokEnabled" /> <span class="muted">Enabled</span></div>
+              <div class="stack">
+                <input id="tiktokPixelCode" placeholder="Pixel code" />
+                <input id="tiktokAccessToken" placeholder="Access token" />
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <button class="button button-primary" id="saveDestinationsButton">Save destinations</button>
+            <span class="status" id="destinationStatus"></span>
+          </div>
+        </article>
+
+        <article class="card span-12 stack">
+          <div>
+            <h2>Recent Delivery Diagnostics</h2>
+            <p class="muted">Latest normalized events and destination delivery outcomes.</p>
           </div>
           <div class="event-list" id="eventList"></div>
-        </article>
-
-        <article class="panel span-5">
-          <div class="section-title">
-            <h2>Webhook Compliance</h2>
-            <div class="hint">App Store readiness and install lifecycle</div>
-          </div>
-          <div class="webhook-list" id="webhookList"></div>
-        </article>
-
-        <article class="panel span-12">
-          <div class="section-title">
-            <h2>Launch Sequence</h2>
-            <div class="hint">Enterprise onboarding checklist for each Shopify merchant</div>
-          </div>
-          <ul>
-            <li>Install the app through Shopify OAuth and persist an offline access token.</li>
-            <li>Approve subscription billing and record the active plan inside the tenant profile.</li>
-            <li>Activate the web pixel extension and create the merchant-specific pixel settings via Admin GraphQL.</li>
-            <li>Map storefront domains and Shopify Markets to a single tenant profile.</li>
-            <li>Validate purchase, checkout, and add-to-cart event delivery against Meta diagnostics.</li>
-            <li>Keep GDPR webhooks green and app uninstall handling idempotent.</li>
-          </ul>
         </article>
       </section>
     </main>
     <script>
-      async function loadOverview() {
-        const response = await fetch('/api/admin/overview');
+      let state = {
+        overview: null,
+        scenarios: [],
+        tenantId: null,
+        tenantDetail: null,
+        commerceAnalytics: null
+      };
+
+      async function fetchJson(path, options) {
+        const response = await fetch(path, options);
         const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.error || 'Request failed');
+        }
+        return payload;
+      }
 
-        document.getElementById('metric-tenants').textContent = payload.summary.tenants;
-        document.getElementById('metric-shops').textContent = payload.summary.installedShops;
-        document.getElementById('metric-events').textContent = payload.summary.trackedEvents;
+      async function loadOverview() {
+        const [overview, scenarioRegistry] = await Promise.all([
+          fetchJson('/api/admin/overview'),
+          fetchJson('/api/admin/scenarios')
+        ]);
 
-        document.getElementById('tenantList').innerHTML = payload.tenants.map((tenant) => \`
-          <div class="tenant-card">
-            <div class="section-title">
-              <strong>\${tenant.displayName}</strong>
-              <span class="pill">\${tenant.plan.name}</span>
-            </div>
-            <div class="hint">\${tenant.shopDomain}</div>
-            <div class="tenant-meta">
-              <span>\${tenant.domains} domains</span>
-              <span>\${tenant.markets} markets</span>
-              <span>\${tenant.eventCount} events ingested</span>
-              <span>Meta \${tenant.metaEnabled ? 'connected' : 'pending'}</span>
-            </div>
+        state.overview = overview;
+        state.scenarios = scenarioRegistry.scenarios;
+
+        document.getElementById('metricTenants').textContent = overview.summary.tenants;
+        document.getElementById('metricEvents').textContent = overview.summary.trackedEvents;
+        document.getElementById('metricScenarios').textContent = scenarioRegistry.summary.total;
+        document.getElementById('summaryHint').textContent =
+          overview.summary.domains + ' domains, ' + overview.summary.markets + ' markets, ' +
+          overview.diagnostics.averageQuality + ' average quality score.';
+
+        const tenantSelect = document.getElementById('tenantSelect');
+        tenantSelect.innerHTML = overview.tenants.map((tenant) => \`<option value="\${tenant.tenantId}">\${tenant.displayName}</option>\`).join('');
+
+        const scenarioSelect = document.getElementById('scenarioSelect');
+        scenarioSelect.innerHTML = state.scenarios.map((scenario) => \`<option value="\${scenario.id}">\${scenario.label} (\${scenario.recommendedEventName})</option>\`).join('');
+
+        if (!state.tenantId && overview.tenants.length) {
+          state.tenantId = overview.tenants[0].tenantId;
+        }
+        tenantSelect.value = state.tenantId || '';
+
+        renderRecentEvents(overview.recentEvents || []);
+        await loadTenantDetail();
+      }
+
+      async function loadTenantDetail() {
+        if (!state.tenantId) return;
+
+        const [tenantDetail, commerceAnalytics] = await Promise.all([
+          fetchJson('/api/admin/tenants/' + state.tenantId),
+          fetchJson('/api/admin/analytics/commerce?tenantId=' + encodeURIComponent(state.tenantId))
+        ]);
+        state.tenantDetail = tenantDetail;
+        state.commerceAnalytics = commerceAnalytics;
+        const tenant = state.tenantDetail;
+
+        document.getElementById('tenantName').textContent = tenant.displayName;
+        document.getElementById('tenantPlan').textContent = tenant.plan ? tenant.plan.name : 'Plan';
+        document.getElementById('tenantShop').textContent = tenant.shopDomain;
+        document.getElementById('tenantDomains').textContent = tenant.supportedDomains.length + ' domains';
+        document.getElementById('tenantMarkets').textContent = tenant.supportedMarkets.length + ' markets';
+        document.getElementById('tenantEnabledScenarios').textContent = tenant.tracking.enabledScenarioIds.length + ' scenarios enabled';
+        document.getElementById('mappingCount').textContent = tenant.tracking.customEventMappings.length + ' mappings configured';
+        document.getElementById('workspaceStatus').textContent = '';
+
+        renderScenarioChecklist(tenant);
+        renderMappings(tenant);
+        renderDestinations(tenant);
+        renderCommerceAnalytics(commerceAnalytics);
+      }
+
+      function renderScenarioChecklist(tenant) {
+        const enabled = new Set(tenant.tracking.enabledScenarioIds);
+        const container = document.getElementById('scenarioChecklist');
+        container.innerHTML = state.scenarios.map((scenario) => \`
+          <label class="checkbox-item">
+            <input type="checkbox" data-scenario-id="\${scenario.id}" \${enabled.has(scenario.id) ? 'checked' : ''} />
+            <span>
+              <strong>\${scenario.label}</strong><br />
+              <span class="muted">\${scenario.category} / \${scenario.source} / \${scenario.recommendedEventName}</span>
+            </span>
+          </label>
+        \`).join('');
+      }
+
+      function renderMappings(tenant) {
+        const mappingList = document.getElementById('mappingList');
+        const mappings = tenant.tracking.customEventMappings || [];
+
+        mappingList.innerHTML = mappings.length
+          ? mappings.map((mapping, index) => \`
+              <div class="item">
+                <div class="row">
+                  <strong>\${mapping.sourceName}</strong>
+                  <span class="pill">\${mapping.scenarioId}</span>
+                  <button class="button button-secondary" data-remove-mapping="\${index}">Remove</button>
+                </div>
+              </div>
+            \`).join('')
+          : '<div class="item"><strong>No custom mappings yet</strong><div class="muted">Add a raw dataLayer or iframe event name and map it to a canonical scenario.</div></div>';
+
+        mappingList.querySelectorAll('[data-remove-mapping]').forEach((button) => {
+          button.addEventListener('click', () => {
+            const index = Number(button.getAttribute('data-remove-mapping'));
+            state.tenantDetail.tracking.customEventMappings.splice(index, 1);
+            renderMappings(state.tenantDetail);
+          });
+        });
+      }
+
+      function renderDestinations(tenant) {
+        const destinations = tenant.destinations || {};
+
+        document.getElementById('metaEnabled').checked = !!destinations.meta?.enabled;
+        document.getElementById('metaPixelId').value = destinations.meta?.pixelId || '';
+        document.getElementById('metaAccessToken').value = destinations.meta?.accessToken || '';
+        document.getElementById('metaTestCode').value = destinations.meta?.testEventCode || '';
+
+        document.getElementById('ga4Enabled').checked = !!destinations.ga4?.enabled;
+        document.getElementById('ga4MeasurementId').value = destinations.ga4?.measurementId || '';
+        document.getElementById('ga4ApiSecret').value = destinations.ga4?.apiSecret || '';
+
+        document.getElementById('googleAdsEnabled').checked = !!destinations.googleAds?.enabled;
+        document.getElementById('googleAdsCustomerId').value = destinations.googleAds?.customerId || '';
+        document.getElementById('googleAdsConversionActionId').value = destinations.googleAds?.conversionActionId || '';
+        document.getElementById('googleAdsTransport').value = destinations.googleAds?.transport || 'preview';
+
+        document.getElementById('tiktokEnabled').checked = !!destinations.tiktok?.enabled;
+        document.getElementById('tiktokPixelCode').value = destinations.tiktok?.pixelCode || '';
+        document.getElementById('tiktokAccessToken').value = destinations.tiktok?.accessToken || '';
+      }
+
+      function renderRecentEvents(events) {
+        document.getElementById('eventList').innerHTML = events.length
+          ? events.map((event) => {
+              const deliveries = Object.entries(event.deliveries || {}).map(([name, result]) => \`\${name}: \${result.status}\`).join(' | ');
+              return \`
+                <div class="item">
+                  <div class="row">
+                    <strong>\${event.canonicalEvent}</strong>
+                    <span class="pill">\${event.eventName}</span>
+                  </div>
+                  <div class="muted">\${event.shopDomain} • quality \${event.qualityScore} • \${deliveries || 'no delivery data'}</div>
+                </div>
+              \`;
+            }).join('')
+          : '<div class="item"><strong>No events yet</strong><div class="muted">Use the web pixel or theme dataLayer bridge to start ingesting traffic.</div></div>';
+      }
+
+      function renderCommerceAnalytics(analytics) {
+        renderCommerceSummary(analytics.summary || {});
+        renderDestinationBreakdown(analytics.destinationBreakdown || []);
+        renderProducts(analytics.topProducts || []);
+        renderPurchases(analytics.recentPurchases || []);
+        renderOrders(analytics.orderStatuses || []);
+      }
+
+      function renderCommerceSummary(summary) {
+        const stats = [
+          ['Revenue', formatMoney(summary.revenue), 'Tracked purchase value'],
+          ['Purchases', summary.purchases || 0, 'Captured purchase events'],
+          ['Orders', summary.trackedOrders || 0, 'Unique tracked orders'],
+          ['Completion', (summary.checkoutCompletionRate || 0) + '%', 'Purchase to checkout-start rate'],
+          ['Product Views', summary.productViews || 0, 'Tracked product views'],
+          ['Add To Cart', summary.addToCarts || 0, 'Tracked add-to-cart events'],
+          ['AOV', formatMoney(summary.averageOrderValue), 'Average order value'],
+          ['Quality', summary.averageQuality || 0, 'Average event quality score']
+        ];
+
+        document.getElementById('commerceSummary').innerHTML = stats.map((stat) => \`
+          <div class="summary-stat">
+            <span class="metric-label">\${stat[0]}</span>
+            <strong>\${stat[1]}</strong>
+            <div class="muted">\${stat[2]}</div>
           </div>
         \`).join('');
+      }
 
-        document.getElementById('planList').innerHTML = payload.plans.map((plan) => \`
-          <div class="plan-card">
-            <strong>\${plan.name}</strong>
-            <div class="plan-price">$\${plan.monthlyPrice}<span class="hint">/mo</span></div>
-            <div class="hint">\${plan.bestFor}</div>
-            <ul>\${plan.features.map((feature) => \`<li>\${feature}</li>\`).join('')}</ul>
-          </div>
-        \`).join('');
+      function renderDestinationBreakdown(rows) {
+        document.getElementById('destinationBreakdown').innerHTML = rows.length
+          ? rows.map((row) => \`
+              <div class="item">
+                <div class="row">
+                  <strong>\${labelizeDestination(row.destination)}</strong>
+                  <span class="pill">Delivered \${row.delivered}</span>
+                </div>
+                <div class="muted">
+                  Failed \${row.failed} • Preview \${row.preview} • Skipped \${row.skipped}
+                </div>
+              </div>
+            \`).join('')
+          : '<div class="item"><strong>No purchase deliveries yet</strong><div class="muted">Once purchase events are ingested, destination delivery health will appear here.</div></div>';
+      }
 
-        document.getElementById('eventList').innerHTML = payload.recentEvents.length ? payload.recentEvents.map((event) => \`
-          <div class="event-card">
-            <strong>\${event.eventName}</strong>
-            <div class="event-meta">
-              <span>\${event.shopDomain}</span>
-              <span>\${event.market.countryCode}/\${event.market.currencyCode}</span>
-              <span>\${event.source}</span>
-              <span>\${event.deliveredToMeta ? 'Meta delivered' : 'Meta queued'}</span>
-            </div>
-          </div>
-        \`).join('') : '<div class="event-card"><strong>No events yet</strong><div class="hint">Use the web pixel or POST /api/events to populate diagnostics.</div></div>';
+      function renderProducts(products) {
+        document.getElementById('productList').innerHTML = products.length
+          ? products.map((product) => \`
+              <div class="item table-row product-grid">
+                <div>
+                  <strong>\${escapeHtml(product.title || product.productId)}</strong>
+                  <div class="muted">\${escapeHtml(product.productId || 'unknown-product')}</div>
+                </div>
+                <span>\${product.views}</span>
+                <span>\${product.addToCarts}</span>
+                <span>\${product.purchases}</span>
+                <div>
+                  <strong>\${formatMoney(product.revenue)}</strong>
+                  <div class="muted">Delivered \${product.deliveredPurchases} • Failed \${product.failedPurchases}</div>
+                </div>
+              </div>
+            \`).join('')
+          : '<div class="item"><strong>No product analytics yet</strong><div class="muted">Product views, carts, and purchases will populate once traffic begins flowing through the tracker.</div></div>';
+      }
 
-        document.getElementById('webhookList').innerHTML = payload.recentWebhooks.length ? payload.recentWebhooks.map((entry) => \`
-          <div class="webhook-card">
-            <strong>\${entry.topic}</strong>
-            <div class="webhook-meta">
-              <span>\${entry.shopDomain || 'unknown shop'}</span>
-              <span>\${entry.verified ? 'verified' : 'rejected'}</span>
-              <span>\${new Date(entry.receivedAt).toLocaleString()}</span>
-            </div>
-          </div>
-        \`).join('') : '<div class="webhook-card"><strong>No webhook traffic yet</strong><div class="hint">Compliance and app lifecycle webhooks will appear here.</div></div>';
+      function renderPurchases(purchases) {
+        document.getElementById('purchaseList').innerHTML = purchases.length
+          ? purchases.map((purchase) => \`
+              <div class="item table-row purchase-grid">
+                <div>
+                  <strong>\${escapeHtml(purchase.orderId)}</strong>
+                  <div class="muted">\${formatDate(purchase.occurredAt)}</div>
+                </div>
+                <span>\${formatMoney(purchase.value)} \${escapeHtml(purchase.currency)}</span>
+                <span>\${escapeHtml(purchase.marketId)}</span>
+                <span>\${purchase.qualityScore}</span>
+                <span>\${statusBadge(deriveDeliveryLabel(purchase.deliveries))}</span>
+              </div>
+            \`).join('')
+          : '<div class="item"><strong>No purchases yet</strong><div class="muted">Purchase events will appear here after checkout completion is tracked.</div></div>';
+      }
+
+      function renderOrders(orders) {
+        document.getElementById('orderList').innerHTML = orders.length
+          ? orders.map((order) => \`
+              <div class="item table-row order-grid">
+                <div>
+                  <strong>\${escapeHtml(order.orderId)}</strong>
+                  <div class="muted">\${escapeHtml(order.marketId)} • \${order.items} items</div>
+                </div>
+                <span>\${escapeHtml(order.timeline.join(' → '))}</span>
+                <span>\${formatMoney(order.value)} \${escapeHtml(order.currency)}</span>
+                <span>\${statusBadge(order.status)}</span>
+                <span>\${formatDate(order.latestAt)}</span>
+              </div>
+            \`).join('')
+          : '<div class="item"><strong>No tracked orders yet</strong><div class="muted">Order-level status appears once checkout and purchase events include an order id.</div></div>';
+      }
+
+      function deriveDeliveryLabel(deliveries) {
+        const statuses = Object.values(deliveries || {}).map((result) => result.status);
+        if (!statuses.length) return 'captured';
+        if (statuses.includes('failed')) return 'attention_needed';
+        if (statuses.includes('preview')) return 'preview_only';
+        if (statuses.includes('skipped')) return 'partially_configured';
+        return 'delivered';
+      }
+
+      function statusBadge(value) {
+        const tone = value === 'delivered'
+          ? 'good'
+          : value === 'attention_needed' || value === 'failed' || value === 'refunded'
+            ? 'bad'
+            : 'warn';
+        return '<span class="badge badge-' + tone + '">' + escapeHtml(labelizeStatus(value)) + '</span>';
+      }
+
+      function labelizeStatus(value) {
+        return String(value || 'unknown').replace(/_/g, ' ');
+      }
+
+      function labelizeDestination(value) {
+        return value === 'ga4'
+          ? 'GA4'
+          : value === 'googleAds'
+            ? 'Google Ads'
+            : value === 'tiktok'
+              ? 'TikTok'
+              : 'Meta';
+      }
+
+      function formatMoney(value) {
+        const number = Number(value || 0);
+        return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(number);
+      }
+
+      function formatDate(value) {
+        if (!value) return '--';
+        try {
+          return new Date(value).toLocaleString();
+        } catch (_error) {
+          return value;
+        }
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? '')
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;');
+      }
+
+      function collectEnabledScenarioIds() {
+        return [...document.querySelectorAll('[data-scenario-id]:checked')].map((input) => input.getAttribute('data-scenario-id'));
+      }
+
+      async function saveTracking() {
+        const payload = {
+          enabledScenarioIds: collectEnabledScenarioIds(),
+          customEventMappings: state.tenantDetail.tracking.customEventMappings
+        };
+
+        state.tenantDetail = await fetchJson('/api/admin/tenants/' + state.tenantId + '/tracking', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        document.getElementById('scenarioStatus').textContent = 'Scenario settings saved.';
+        document.getElementById('mappingStatus').textContent = 'Mappings persisted with tracking settings.';
+        await loadOverview();
+      }
+
+      async function saveDestinations() {
+        const payload = {
+          meta: {
+            enabled: document.getElementById('metaEnabled').checked,
+            pixelId: document.getElementById('metaPixelId').value,
+            accessToken: document.getElementById('metaAccessToken').value,
+            testEventCode: document.getElementById('metaTestCode').value || undefined
+          },
+          ga4: {
+            enabled: document.getElementById('ga4Enabled').checked,
+            measurementId: document.getElementById('ga4MeasurementId').value,
+            apiSecret: document.getElementById('ga4ApiSecret').value
+          },
+          googleAds: {
+            enabled: document.getElementById('googleAdsEnabled').checked,
+            customerId: document.getElementById('googleAdsCustomerId').value,
+            conversionActionId: document.getElementById('googleAdsConversionActionId').value,
+            transport: document.getElementById('googleAdsTransport').value
+          },
+          tiktok: {
+            enabled: document.getElementById('tiktokEnabled').checked,
+            pixelCode: document.getElementById('tiktokPixelCode').value,
+            accessToken: document.getElementById('tiktokAccessToken').value || undefined
+          }
+        };
+
+        state.tenantDetail = await fetchJson('/api/admin/tenants/' + state.tenantId + '/destinations', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        document.getElementById('destinationStatus').textContent = 'Destination settings saved.';
+        await loadOverview();
+      }
+
+      function addMapping() {
+        const sourceName = document.getElementById('customSourceName').value.trim();
+        const scenarioId = document.getElementById('scenarioSelect').value;
+        if (!sourceName || !scenarioId) {
+          document.getElementById('mappingStatus').textContent = 'Enter a raw event name and choose a scenario.';
+          return;
+        }
+
+        state.tenantDetail.tracking.customEventMappings.push({
+          sourceName,
+          scenarioId,
+          enabled: true
+        });
+        document.getElementById('customSourceName').value = '';
+        document.getElementById('mappingStatus').textContent = 'Mapping added locally. Save mappings to persist.';
+        renderMappings(state.tenantDetail);
       }
 
       async function createInstallLink() {
         const shop = prompt('Enter a myshopify shop domain', 'demo-shop.myshopify.com');
         if (!shop) return;
 
-        const response = await fetch('/api/admin/onboarding/install-link?shop=' + encodeURIComponent(shop));
-        const payload = await response.json();
-        if (!response.ok) {
-          alert(payload.error || 'Unable to generate install link');
-          return;
+        try {
+          const payload = await fetchJson('/api/admin/onboarding/install-link?shop=' + encodeURIComponent(shop));
+          await navigator.clipboard.writeText(payload.installUrl);
+          document.getElementById('workspaceStatus').textContent = 'Install URL copied to clipboard.';
+        } catch (error) {
+          document.getElementById('workspaceStatus').textContent = error.message;
         }
-        await navigator.clipboard.writeText(payload.installUrl);
-        alert('Install URL copied to clipboard');
       }
 
       document.getElementById('refreshButton').addEventListener('click', loadOverview);
       document.getElementById('copyInstallLinkButton').addEventListener('click', createInstallLink);
-      loadOverview();
+      document.getElementById('tenantSelect').addEventListener('change', async (event) => {
+        state.tenantId = event.target.value;
+        await loadTenantDetail();
+      });
+      document.getElementById('saveScenarioButton').addEventListener('click', saveTracking);
+      document.getElementById('saveMappingsButton').addEventListener('click', saveTracking);
+      document.getElementById('saveDestinationsButton').addEventListener('click', saveDestinations);
+      document.getElementById('addMappingButton').addEventListener('click', addMapping);
+
+      loadOverview().catch((error) => {
+        document.getElementById('workspaceStatus').textContent = error.message;
+      });
     </script>
   </body>
 </html>`;

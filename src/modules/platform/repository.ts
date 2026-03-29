@@ -1,8 +1,10 @@
 import type {
+  DestinationConfigs,
   MetaConnection,
   PlatformSeed,
   ShopInstallation,
   Tenant,
+  TenantTrackingConfig,
   WebhookReceipt
 } from "./types.js";
 
@@ -15,6 +17,11 @@ export interface PlatformRepository {
   saveInstallation(installation: ShopInstallation): Promise<void>;
   markUninstalled(shopDomain: string): Promise<void>;
   upsertMetaConnection(tenantId: string, connection: MetaConnection): Promise<Tenant | null>;
+  updateTrackingConfig(tenantId: string, tracking: TenantTrackingConfig): Promise<Tenant | null>;
+  updateDestinationConfigs(
+    tenantId: string,
+    destinationConfigs: DestinationConfigs
+  ): Promise<Tenant | null>;
   recordWebhook(receipt: WebhookReceipt): Promise<void>;
   listWebhooks(limit: number): Promise<WebhookReceipt[]>;
 }
@@ -91,7 +98,72 @@ export class InMemoryPlatformRepository implements PlatformRepository {
 
     const updated: Tenant = {
       ...tenant,
-      meta: connection,
+      destinations: {
+        ...tenant.destinations,
+        meta: connection
+      },
+      updatedAt: new Date().toISOString()
+    };
+    this.tenants.set(tenantId, updated);
+
+    return updated;
+  }
+
+  async updateTrackingConfig(tenantId: string, tracking: TenantTrackingConfig): Promise<Tenant | null> {
+    const tenant = this.tenants.get(tenantId);
+    if (!tenant) {
+      return null;
+    }
+
+    const updated: Tenant = {
+      ...tenant,
+      tracking,
+      updatedAt: new Date().toISOString()
+    };
+    this.tenants.set(tenantId, updated);
+
+    return updated;
+  }
+
+  async updateDestinationConfigs(
+    tenantId: string,
+    destinationConfigs: DestinationConfigs
+  ): Promise<Tenant | null> {
+    const tenant = this.tenants.get(tenantId);
+    if (!tenant) {
+      return null;
+    }
+
+    const updated: Tenant = {
+      ...tenant,
+      destinations: {
+        ...tenant.destinations,
+        ...destinationConfigs,
+        meta: destinationConfigs.meta
+          ? {
+              ...tenant.destinations.meta,
+              ...destinationConfigs.meta
+            }
+          : tenant.destinations.meta,
+        ga4: destinationConfigs.ga4
+          ? {
+              ...tenant.destinations.ga4,
+              ...destinationConfigs.ga4
+            }
+          : tenant.destinations.ga4,
+        googleAds: destinationConfigs.googleAds
+          ? {
+              ...tenant.destinations.googleAds,
+              ...destinationConfigs.googleAds
+            }
+          : tenant.destinations.googleAds,
+        tiktok: destinationConfigs.tiktok
+          ? {
+              ...tenant.destinations.tiktok,
+              ...destinationConfigs.tiktok
+            }
+          : tenant.destinations.tiktok
+      },
       updatedAt: new Date().toISOString()
     };
     this.tenants.set(tenantId, updated);

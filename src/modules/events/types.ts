@@ -150,6 +150,8 @@ export interface NormalizedEvent extends IncomingEvent {
   eventId: string;
   occurredAt: string;
   dedupeKey: string;
+  scenarioId?: string;
+  scenarioEnabled: boolean;
   canonicalEvent: CanonicalEventName;
   category:
     | "commerce"
@@ -167,9 +169,16 @@ export interface NormalizedEvent extends IncomingEvent {
   qualityWarnings: string[];
   identity: ResolvedIdentity;
   deliveredToMeta: boolean;
+  deliveries: Record<string, DeliveryStatus>;
 }
 
 export interface IngestResult {
   event: NormalizedEvent;
   duplicate: boolean;
+}
+
+export interface DeliveryStatus {
+  status: "delivered" | "failed" | "skipped" | "preview";
+  detail?: string;
+  payloadPreview?: unknown;
 }

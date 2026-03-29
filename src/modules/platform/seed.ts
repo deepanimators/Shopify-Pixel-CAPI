@@ -42,10 +42,54 @@ export function createSeedPlatformData(): PlatformSeed {
             storefrontDomain: "example.co.uk"
           }
         ],
-        meta: {
-          pixelId: "123456789012345",
-          accessToken: "tenant-demo-token",
-          enabled: false
+        destinations: {
+          meta: {
+            pixelId: "123456789012345",
+            accessToken: "tenant-demo-token",
+            enabled: false
+          },
+          ga4: {
+            measurementId: "G-EXAMPLE123",
+            apiSecret: "ga4-demo-secret",
+            enabled: false
+          },
+          googleAds: {
+            customerId: "1234567890",
+            conversionActionId: "987654321",
+            transport: "preview",
+            enabled: false
+          },
+          tiktok: {
+            pixelCode: "C1234567890",
+            enabled: false
+          }
+        },
+        tracking: {
+          enabledScenarioIds: [
+            "page_view",
+            "product_view",
+            "product_impression",
+            "add_to_cart",
+            "remove_from_cart",
+            "begin_checkout",
+            "add_shipping_info",
+            "add_payment_info",
+            "purchase",
+            "td_ssc_id_success",
+            "gtm_history_change"
+          ],
+          customEventMappings: [
+            {
+              sourceName: "remove-from-cart",
+              scenarioId: "remove_from_cart",
+              enabled: true
+            },
+            {
+              sourceName: "td_ssc_id_success",
+              scenarioId: "td_ssc_id_success",
+              enabled: true
+            }
+          ]
         },
         createdAt: now,
         updatedAt: now
@@ -78,6 +122,23 @@ export function createSeedPlatformData(): PlatformSeed {
             storefrontDomain: "eu.luxuryhome.com"
           }
         ],
+        destinations: {
+          meta: {
+            pixelId: "223456789012345",
+            accessToken: "luxury-demo-token",
+            enabled: false
+          }
+        },
+        tracking: {
+          enabledScenarioIds: [
+            "page_view",
+            "product_view",
+            "add_to_cart",
+            "begin_checkout",
+            "purchase"
+          ],
+          customEventMappings: []
+        },
         createdAt: now,
         updatedAt: now
       }

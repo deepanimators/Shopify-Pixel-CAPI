@@ -1,10 +1,10 @@
 import { createHash, randomUUID } from "node:crypto";
 
 import { logger } from "../../lib/logger.js";
+import { DestinationService } from "../destinations/service.js";
 import { IdentityResolver } from "../identity/resolver.js";
-import { MetaClient } from "../meta/client.js";
 import type { PlatformRepository } from "../platform/repository.js";
-import { canonicalCategory, toCanonicalEventName } from "./catalog.js";
+import { canonicalCategory, resolveScenario, toCanonicalEventName } from "./catalog.js";
 import type { EventRepository } from "./repository.js";
 import type { IncomingEvent, IngestResult, NormalizedEvent } from "./types.js";
 
@@ -13,7 +13,7 @@ export class EventService {
     private readonly eventRepository: EventRepository,
     private readonly platformRepository: PlatformRepository,
     private readonly identityResolver = new IdentityResolver(),
-    private readonly metaClient = new MetaClient()
+    private readonly destinationService = new DestinationService()
   ) {}
 
   async ingest(input: IncomingEvent): Promise<IngestResult> {
@@ -26,11 +26,21 @@ export class EventService {
     }
 
     const identity = this.identityResolver.resolve(input.user);
+    const rawEventName =
+      typeof input.properties?.rawEventName === "string" ? input.properties.rawEventName : undefined;
+    const scenario = resolveScenario(input.eventName, tenant.tracking, rawEventName);
+    const canonicalEvent = scenario
+      ? scenario.canonicalEvent
+      : toCanonicalEventName(input.eventName);
+    const scenarioEnabled =
+      !scenario ||
+      tenant.tracking.enabledScenarioIds.length === 0 ||
+      tenant.tracking.enabledScenarioIds.includes(scenario.id);
     const eventId = input.eventId ?? input.browserEventId ?? randomUUID();
     const occurredAt = input.occurredAt ?? new Date().toISOString();
     const dedupeKey = this.buildDedupeKey({
       tenantId: tenant.tenantId,
-      eventName: input.eventName,
+      eventName: scenario?.recommendedEventName ?? input.eventName,
       eventId,
       shopDomain: input.shopDomain,
       orderId: input.commerce?.orderId,
@@ -52,15 +62,39 @@ export class EventService {
       eventId,
       occurredAt,
       dedupeKey,
-      canonicalEvent: toCanonicalEventName(input.eventName),
-      category: canonicalCategory(toCanonicalEventName(input.eventName)),
-      ...this.scoreEvent(input),
+      scenarioId: scenario?.id,
+      scenarioEnabled,
+      canonicalEvent,
+      category: canonicalCategory(canonicalEvent),
+      ...this.scoreEvent(input, canonicalEvent, scenarioEnabled),
       identity,
-      deliveredToMeta: false
+      deliveredToMeta: false,
+      deliveries: {}
     };
 
-    const deliveredToMeta = await this.metaClient.sendEvent(normalizedEvent, tenant.meta);
-    normalizedEvent.deliveredToMeta = deliveredToMeta;
+    if (scenarioEnabled) {
+      normalizedEvent.deliveries = await this.destinationService.deliver(normalizedEvent, tenant);
+      normalizedEvent.deliveredToMeta = normalizedEvent.deliveries.meta?.status === "delivered";
+    } else {
+      normalizedEvent.deliveries = {
+        meta: {
+          status: "skipped",
+          detail: "Scenario disabled in tenant tracking configuration"
+        },
+        ga4: {
+          status: "skipped",
+          detail: "Scenario disabled in tenant tracking configuration"
+        },
+        googleAds: {
+          status: "skipped",
+          detail: "Scenario disabled in tenant tracking configuration"
+        },
+        tiktok: {
+          status: "skipped",
+          detail: "Scenario disabled in tenant tracking configuration"
+        }
+      };
+    }
 
     await this.eventRepository.save(normalizedEvent);
 
@@ -99,8 +133,11 @@ export class EventService {
     return createHash("sha256").update(seed).digest("hex");
   }
 
-  private scoreEvent(input: IncomingEvent) {
-    const canonicalEvent = toCanonicalEventName(input.eventName);
+  private scoreEvent(
+    input: IncomingEvent,
+    canonicalEvent: NormalizedEvent["canonicalEvent"],
+    scenarioEnabled: boolean
+  ) {
     const warnings: string[] = [];
 
     if (!input.page.url) {
@@ -141,6 +178,10 @@ export class EventService {
 
     if (!input.user.anonymousId && !input.user.customerId && !input.user.email && !input.user.phone) {
       warnings.push("missing_identity_signals");
+    }
+
+    if (!scenarioEnabled) {
+      warnings.push("scenario_disabled_for_tenant");
     }
 
     const qualityScore = Math.max(40, 100 - warnings.length * 10);
