@@ -3,7 +3,7 @@
 client_id = "fcb447576080550bbf9bf6f4db443f47"
 name = "FB Pixel CAPI"
 application_url = "https://fb-pixel-capi.pthapp.co.in"
-embedded = true
+embedded = false
 
 [build]
 automatically_update_urls_on_dev = true

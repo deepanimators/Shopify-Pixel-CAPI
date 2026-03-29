@@ -363,13 +363,15 @@ export function renderDashboard() {
           <div class="eyebrow">Shopify Tracking Control Plane</div>
           <h1>Map merchant dataLayer names into one canonical attribution model.</h1>
           <p class="muted">
-            This embedded surface lets each merchant choose which tracking scenarios are enabled,
-            map their own raw event names into canonical ecommerce journeys, and configure
-            destination adapters for Meta, GA4, Google Ads, and TikTok from one place.
+            This standalone control plane lets each merchant choose which tracking scenarios are
+            enabled, map their own raw event names into canonical ecommerce journeys, and
+            configure destination adapters for Meta, GA4, Google Ads, and TikTok from one place.
+            The Shopify app is installed into stores through the generated install link, while this
+            admin remains hosted outside Shopify.
           </p>
           <div class="hero-actions">
             <button class="button button-primary" id="refreshButton">Refresh workspace</button>
-            <button class="button button-secondary" id="copyInstallLinkButton">Create install link</button>
+            <button class="button button-secondary" id="copyInstallLinkButton">Create Shopify install link</button>
           </div>
         </article>
         <aside class="card">
