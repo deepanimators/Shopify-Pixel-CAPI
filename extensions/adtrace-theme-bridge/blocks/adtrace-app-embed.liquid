@@ -1,0 +1,37 @@
+{% schema %}
+{
+  "name": "AdTrace dataLayer bridge",
+  "target": "body",
+  "javascript": "adtrace-datalayer-bridge.js",
+  "settings": [
+    {
+      "type": "text",
+      "id": "app_proxy_path",
+      "label": "App proxy path",
+      "default": "/apps/adtrace"
+    },
+    {
+      "type": "text",
+      "id": "country_code",
+      "label": "Fallback country code",
+      "default": "US"
+    },
+    {
+      "type": "text",
+      "id": "currency_code",
+      "label": "Fallback currency code",
+      "default": "USD"
+    }
+  ]
+}
+{% endschema %}
+
+<script>
+  window.AdTraceThemeBridgeConfig = {
+    appProxyPath: {{ block.settings.app_proxy_path | json }},
+    countryCode: {{ block.settings.country_code | default: localization.country.iso_code | json }},
+    currencyCode: {{ block.settings.currency_code | default: cart.currency.iso_code | default: shop.currency | json }},
+    shopDomain: {{ shop.permanent_domain | json }},
+    anonymousId: {{ cart.token | json }}
+  };
+</script>

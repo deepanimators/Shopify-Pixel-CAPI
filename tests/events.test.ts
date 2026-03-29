@@ -142,6 +142,16 @@ describe("admin route", () => {
     expect(response.body.installUrl).toContain("test-shop.myshopify.com/admin/oauth/authorize");
   });
 
+  it("returns the ecommerce scenario registry", async () => {
+    const app = createApp(createContainer());
+
+    const response = await request(app).get("/api/admin/scenarios?category=checkout");
+
+    expect(response.status).toBe(200);
+    expect(response.body.summary.total).toBeGreaterThan(100);
+    expect(response.body.scenarios.length).toBeGreaterThan(5);
+  });
+
   it("returns diagnostics breakdowns", async () => {
     const container = createContainer();
     const app = createApp(container);

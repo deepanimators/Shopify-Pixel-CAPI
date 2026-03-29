@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 
 import type { AppContainer } from "../container.js";
+import { EVENT_SCENARIOS, scenarioSummary } from "../modules/events/scenarios.js";
 
 const metaSchema = z.object({
   pixelId: z.string().min(1),
@@ -63,6 +64,25 @@ export function createAdminRouter(container: AppContainer) {
 
   router.get("/plans", (_request, response) => {
     response.json(container.billingService.listPlans());
+  });
+
+  router.get("/scenarios", (request, response) => {
+    const category = request.query.category ? String(request.query.category) : null;
+    const source = request.query.source ? String(request.query.source) : null;
+    const scenarios = EVENT_SCENARIOS.filter((scenario) => {
+      if (category && scenario.category !== category) {
+        return false;
+      }
+      if (source && scenario.source !== source) {
+        return false;
+      }
+      return true;
+    });
+
+    response.json({
+      summary: scenarioSummary(),
+      scenarios
+    });
   });
 
   router.get("/onboarding/install-link", (request, response) => {

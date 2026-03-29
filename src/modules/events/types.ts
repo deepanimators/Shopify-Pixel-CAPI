@@ -23,22 +23,49 @@ export type LegacyEventName =
   | "begin_checkout"
   | "purchase";
 
-export type EventName = StandardEventName | LegacyEventName | `custom:${string}`;
+export type EventName = StandardEventName | LegacyEventName | string;
 
 export type CanonicalEventName =
   | "page_view"
   | "collection_view"
   | "product_view"
+  | "view_item_list"
+  | "select_item"
   | "search"
+  | "view_promotion"
+  | "select_promotion"
   | "cart_view"
   | "add_to_cart"
   | "remove_from_cart"
+  | "update_cart"
+  | "apply_coupon"
+  | "remove_coupon"
+  | "add_to_wishlist"
+  | "remove_from_wishlist"
+  | "compare_product"
+  | "remove_from_compare"
   | "begin_checkout"
   | "add_contact_info"
   | "add_address_info"
   | "add_shipping_info"
   | "add_payment_info"
   | "purchase"
+  | "refund"
+  | "cancel_order"
+  | "return_request"
+  | "login"
+  | "sign_up"
+  | "identify_customer"
+  | "generate_lead"
+  | "subscribe_newsletter"
+  | "share"
+  | "support_contact"
+  | "consent_update"
+  | "subscription_start"
+  | "subscription_renew"
+  | "subscription_cancel"
+  | "subscription_pause"
+  | "subscription_resume"
   | "alert"
   | "ui_error"
   | "custom_event";
@@ -124,7 +151,18 @@ export interface NormalizedEvent extends IncomingEvent {
   occurredAt: string;
   dedupeKey: string;
   canonicalEvent: CanonicalEventName;
-  category: "commerce" | "checkout" | "engagement" | "quality" | "custom";
+  category:
+    | "commerce"
+    | "checkout"
+    | "engagement"
+    | "merchandising"
+    | "conversion"
+    | "identity"
+    | "retention"
+    | "support"
+    | "consent"
+    | "quality"
+    | "custom";
   qualityScore: number;
   qualityWarnings: string[];
   identity: ResolvedIdentity;

@@ -47,6 +47,7 @@ This repository is structured as an enterprise Shopify app, not a one-endpoint p
 
 - Event ingestion API at `POST /api/events`
 - Web Pixel extension scaffold in `extensions/adtrace-web-pixel`
+- Theme app embed bridge in `extensions/adtrace-theme-bridge`
 - Multi-market and multi-domain tenant modeling
 
 ### Commercial surfaces
@@ -169,6 +170,29 @@ Every normalized event is enriched with:
 - an event category
 - a quality score
 - quality warnings for missing identity, market, checkout, or purchase fields
+
+### 7. Juspay / dataLayer Bridge
+
+The repository now includes a top-frame bridge for checkout implementations that emit GTM or `dataLayer` events outside Shopify's standard pixel bus.
+
+It normalizes events such as:
+
+- `begin_checkout`
+- `add_shipping_info`
+- `add_payment_info`
+- `purchase`
+- `remove-from-cart`
+- `product-impression`
+- `gtm.historyChange`
+- `td_ssc_id_success`
+
+### 8. Scenario Registry
+
+The app now includes a broad ecommerce scenario registry and alias system so it can normalize a large set of Shopify, GA4-style, GTM, and merchant-defined event names into canonical platform events.
+
+Use:
+
+- `GET /api/admin/scenarios`
 
 ## API Overview
 

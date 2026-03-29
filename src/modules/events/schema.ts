@@ -1,24 +1,9 @@
 import { z } from "zod";
 
-import { SHOPIFY_STANDARD_EVENTS } from "./catalog.js";
-
-const eventNameSchema = z.union([
-  z.enum(SHOPIFY_STANDARD_EVENTS),
-  z.enum([
-    "page_view",
-    "product_view",
-    "add_to_cart",
-    "remove_from_cart",
-    "begin_checkout",
-    "purchase"
-  ]),
-  z.string().regex(/^custom:/)
-]);
-
 export const incomingEventSchema = z.object({
   tenantId: z.string().min(1).optional(),
   shopDomain: z.string().min(1),
-  eventName: eventNameSchema,
+  eventName: z.string().min(1),
   source: z.enum(["browser", "server"]),
   eventId: z.string().optional(),
   browserEventId: z.string().optional(),
