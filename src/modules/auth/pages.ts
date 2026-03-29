@@ -34,12 +34,12 @@ export function renderLoginPage(params: {
         <p>${escapeHtml(params.subtitle)}</p>
         ${showDisplayName
           ? `<label for="displayName">Display name</label>
-        <input id="displayName" name="displayName" placeholder="Deepak" required />`
+        <input id="displayName" name="displayName" placeholder="Deepak" autocomplete="name" required />`
           : ""}
         <label for="email">Email</label>
-        <input id="email" name="email" type="email" placeholder="you@company.com" required />
+        <input id="email" name="email" type="email" placeholder="you@company.com" autocomplete="email" required />
         <label for="password">Password</label>
-        <input id="password" name="password" type="password" placeholder="Minimum 8 characters" required />
+        <input id="password" name="password" type="password" placeholder="Minimum 8 characters" autocomplete="${showDisplayName ? "new-password" : "current-password"}" required />
         <button type="submit">${escapeHtml(params.submitLabel)}</button>
         ${params.error ? `<div class="error">${escapeHtml(params.error)}</div>` : ""}
         <div class="switch">
