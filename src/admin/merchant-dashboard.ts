@@ -1,10 +1,15 @@
+import { env } from "../config/env.js";
+
 export function renderMerchantDashboard() {
   return `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="shopify-api-key" content="${escapeHtml(env.SHOPIFY_API_KEY ?? "")}" />
     <title>AdTrace Merchant Workspace</title>
+    <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
+    <script src="https://cdn.shopify.com/shopifycloud/polaris.js"></script>
     <style>
       :root {
         --bg: #f4f1ea;
@@ -244,6 +249,7 @@ export function renderMerchantDashboard() {
     </style>
   </head>
   <body>
+    <ui-title-bar title="AdTrace Merchant Workspace"></ui-title-bar>
     <main class="shell">
       <section class="hero">
         <article class="card">
@@ -893,4 +899,13 @@ export function renderMerchantDashboard() {
     </script>
   </body>
 </html>`;
+}
+
+function escapeHtml(value: string) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
