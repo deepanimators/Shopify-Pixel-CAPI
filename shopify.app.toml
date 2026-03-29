@@ -2,7 +2,7 @@ client_id = "SHOPIFY_API_KEY"
 name = "AdTrace Enterprise"
 handle = "adtrace-enterprise"
 application_url = "https://fb-pixel-capi.pthapp.co.in"
-embedded = false
+embedded = true
 
 [build]
 automatically_update_urls_on_dev = false

@@ -46,7 +46,8 @@ export function requireAppUser(request: Request, response: Response, next: NextF
 
   const acceptsHtml = request.accepts(["html", "json"]) === "html";
   if (acceptsHtml) {
-    return response.redirect(`/auth/login?next=${encodeURIComponent(request.originalUrl)}`);
+    const next = request.originalUrl === "/" ? "/portal" : request.originalUrl;
+    return response.redirect(`/auth/login?next=${encodeURIComponent(next)}`);
   }
 
   return response.status(401).json({ error: "Authentication required" });

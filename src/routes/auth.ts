@@ -45,7 +45,7 @@ export function createAuthRouter(container: AppContainer) {
     try {
       const result = await container.userAuthService.login(parsed.data.email, parsed.data.password);
       setSessionCookie(response, result.session.sessionToken);
-      const next = typeof request.query.next === "string" ? request.query.next : "/app";
+      const next = typeof request.query.next === "string" ? request.query.next : "/portal";
       return response.redirect(next);
     } catch (error) {
       return response.status(401).type("html").send(
@@ -93,7 +93,7 @@ export function createAuthRouter(container: AppContainer) {
         password: parsed.data.password
       });
       setSessionCookie(response, result.session.sessionToken);
-      return response.redirect("/app");
+      return response.redirect("/portal");
     } catch (error) {
       return response.status(400).type("html").send(
         renderLoginPage({
@@ -110,7 +110,7 @@ export function createAuthRouter(container: AppContainer) {
   router.post("/logout", async (request, response) => {
     await container.userAuthService.logout(getSessionToken(request));
     clearSessionCookie(response);
-    response.redirect("/auth/login");
+      response.redirect("/auth/login?next=%2Fportal");
   });
 
   router.get("/session", async (request, response) => {
@@ -147,7 +147,10 @@ export function createAuthRouter(container: AppContainer) {
           "tenant_owner"
         );
       }
-      response.redirect(`/app?tenant=${encodeURIComponent(result.tenantId)}&shop=${encodeURIComponent(result.shop)}`);
+      const target = request.query.host || request.query.embedded
+        ? `/app?tenant=${encodeURIComponent(result.tenantId)}&shop=${encodeURIComponent(result.shop)}`
+        : `/portal?tenant=${encodeURIComponent(result.tenantId)}&shop=${encodeURIComponent(result.shop)}`;
+      response.redirect(target);
     } catch (error) {
       response.status(401).json({
         error: error instanceof Error ? error.message : "OAuth callback failed"
