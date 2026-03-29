@@ -2,10 +2,12 @@ import type { Server } from "node:http";
 
 import { createApp } from "./app.js";
 import { env } from "./config/env.js";
-import { closeDatabasePool } from "./lib/database.js";
+import { closeDatabasePool, ensureDatabaseSchema } from "./lib/database.js";
 import { logger } from "./lib/logger.js";
 
-export function startServer() {
+export async function startServer() {
+  await ensureDatabaseSchema();
+
   const app = createApp();
   const server = app.listen(env.PORT, () => {
     logger.info("API listening", {

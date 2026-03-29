@@ -1,4 +1,4 @@
-create table tenants (
+create table if not exists tenants (
   tenant_id text primary key,
   display_name text not null,
   shop_domain text not null unique,
@@ -8,7 +8,7 @@ create table tenants (
   updated_at timestamptz not null
 );
 
-create table tenant_domains (
+create table if not exists tenant_domains (
   id bigserial primary key,
   tenant_id text not null references tenants(tenant_id) on delete cascade,
   host text not null,
@@ -16,7 +16,7 @@ create table tenant_domains (
   market_id text
 );
 
-create table tenant_markets (
+create table if not exists tenant_markets (
   id text not null,
   tenant_id text not null references tenants(tenant_id) on delete cascade,
   label text not null,
@@ -27,7 +27,7 @@ create table tenant_markets (
   primary key (tenant_id, id)
 );
 
-create table meta_connections (
+create table if not exists meta_connections (
   tenant_id text primary key references tenants(tenant_id) on delete cascade,
   pixel_id text not null,
   access_token text not null,
@@ -36,7 +36,7 @@ create table meta_connections (
   last_validated_at timestamptz
 );
 
-create table ga4_connections (
+create table if not exists ga4_connections (
   tenant_id text primary key references tenants(tenant_id) on delete cascade,
   measurement_id text not null,
   api_secret text not null,
@@ -45,7 +45,7 @@ create table ga4_connections (
   last_validated_at timestamptz
 );
 
-create table google_ads_connections (
+create table if not exists google_ads_connections (
   tenant_id text primary key references tenants(tenant_id) on delete cascade,
   customer_id text not null,
   conversion_action_id text not null,
@@ -59,7 +59,7 @@ create table google_ads_connections (
   last_validated_at timestamptz
 );
 
-create table tiktok_connections (
+create table if not exists tiktok_connections (
   tenant_id text primary key references tenants(tenant_id) on delete cascade,
   pixel_code text not null,
   access_token text,
@@ -69,13 +69,13 @@ create table tiktok_connections (
   last_validated_at timestamptz
 );
 
-create table tenant_tracking_configs (
+create table if not exists tenant_tracking_configs (
   tenant_id text primary key references tenants(tenant_id) on delete cascade,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
-create table tenant_enabled_scenarios (
+create table if not exists tenant_enabled_scenarios (
   tenant_id text not null references tenants(tenant_id) on delete cascade,
   scenario_id text not null,
   enabled boolean not null default true,
@@ -84,7 +84,7 @@ create table tenant_enabled_scenarios (
   primary key (tenant_id, scenario_id)
 );
 
-create table tenant_custom_event_mappings (
+create table if not exists tenant_custom_event_mappings (
   id bigserial primary key,
   tenant_id text not null references tenants(tenant_id) on delete cascade,
   source_name text not null,
@@ -94,10 +94,10 @@ create table tenant_custom_event_mappings (
   updated_at timestamptz not null default now()
 );
 
-create unique index tenant_custom_event_mappings_unique_idx
+create unique index if not exists tenant_custom_event_mappings_unique_idx
   on tenant_custom_event_mappings (tenant_id, source_name);
 
-create table tenant_destination_overrides (
+create table if not exists tenant_destination_overrides (
   id bigserial primary key,
   tenant_id text not null references tenants(tenant_id) on delete cascade,
   scope_type text not null,
@@ -111,7 +111,7 @@ create table tenant_destination_overrides (
   unique (tenant_id, scope_type, scope_id)
 );
 
-create table shop_installations (
+create table if not exists shop_installations (
   shop_domain text primary key,
   tenant_id text not null references tenants(tenant_id) on delete cascade,
   access_token text,
@@ -121,7 +121,7 @@ create table shop_installations (
   uninstalled_at timestamptz
 );
 
-create table identity_profiles (
+create table if not exists identity_profiles (
   identity_key text primary key,
   tenant_id text not null references tenants(tenant_id) on delete cascade,
   anonymous_id text,
@@ -133,7 +133,7 @@ create table identity_profiles (
   last_seen_at timestamptz not null
 );
 
-create table normalized_events (
+create table if not exists normalized_events (
   event_id text primary key,
   tenant_id text not null references tenants(tenant_id) on delete cascade,
   shop_domain text not null,
@@ -154,10 +154,10 @@ create table normalized_events (
   created_at timestamptz not null default now()
 );
 
-create index normalized_events_tenant_occurred_at_idx
+create index if not exists normalized_events_tenant_occurred_at_idx
   on normalized_events (tenant_id, occurred_at desc);
 
-create table webhook_receipts (
+create table if not exists webhook_receipts (
   id bigserial primary key,
   topic text not null,
   shop_domain text not null,
