@@ -39,6 +39,21 @@ function parseEnv() {
       );
     }
 
+    if (parsed.data.NODE_ENV === "production") {
+      const appUrlHost = new URL(parsed.data.SHOPIFY_APP_URL).hostname;
+      if (appUrlHost === "localhost" || appUrlHost === "127.0.0.1") {
+        throw new Error(
+          "Invalid environment configuration:\nSHOPIFY_APP_URL: Production must use your public app URL, not localhost."
+        );
+      }
+
+      if (parsed.data.STORAGE_DRIVER === "memory") {
+        throw new Error(
+          "Invalid environment configuration:\nSTORAGE_DRIVER: Production must use postgres so installs and events persist."
+        );
+      }
+    }
+
     return parsed.data;
   }
 
