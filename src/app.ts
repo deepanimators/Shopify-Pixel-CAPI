@@ -7,6 +7,7 @@ import { createAuthRouter } from "./routes/auth.js";
 import { createAdminRouter } from "./routes/admin.js";
 import { createEventsRouter } from "./routes/events.js";
 import { createHealthRouter } from "./routes/health.js";
+import { createPublicRouter } from "./routes/public.js";
 import { createWebhooksRouter } from "./routes/webhooks.js";
 
 export function createApp(container: AppContainer = createContainer()) {
@@ -20,6 +21,7 @@ export function createApp(container: AppContainer = createContainer()) {
   app.use(express.json({ limit: "1mb" }));
   app.use(attachAuth(container));
 
+  app.use(createPublicRouter(container));
   app.use("/health", createHealthRouter());
   app.use("/auth", createAuthRouter(container));
   app.use("/api/events", createEventsRouter(container));

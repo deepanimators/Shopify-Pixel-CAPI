@@ -6,6 +6,7 @@ import type {
   DestinationScope,
   MetaConnection,
   ShopInstallation,
+  SupportRequest,
   Tenant,
   TenantDomain,
   TenantMarket,
@@ -515,6 +516,67 @@ export class PostgresPlatformRepository implements PlatformRepository {
     await this.pool.query(`update tenants set updated_at = now() where tenant_id = $1`, [tenantId]);
 
     return this.getTenant(tenantId);
+  }
+
+  async createSupportRequest(request: SupportRequest): Promise<SupportRequest> {
+    await this.pool.query(
+      `insert into support_requests (
+        request_id,
+        name,
+        email,
+        shop_domain,
+        category,
+        subject,
+        description,
+        status,
+        created_at
+      ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9::timestamptz)`,
+      [
+        request.requestId,
+        request.name,
+        request.email,
+        request.shopDomain ?? null,
+        request.category,
+        request.subject,
+        request.description,
+        request.status,
+        request.createdAt
+      ]
+    );
+
+    return request;
+  }
+
+  async listSupportRequests(limit: number): Promise<SupportRequest[]> {
+    const result = await this.pool.query<{
+      request_id: string;
+      name: string;
+      email: string;
+      shop_domain: string | null;
+      category: SupportRequest["category"];
+      subject: string;
+      description: string;
+      status: SupportRequest["status"];
+      created_at: Date | string;
+    }>(
+      `select request_id, name, email, shop_domain, category, subject, description, status, created_at
+       from support_requests
+       order by created_at desc
+       limit $1`,
+      [limit]
+    );
+
+    return result.rows.map((row) => ({
+      requestId: row.request_id,
+      name: row.name,
+      email: row.email,
+      shopDomain: row.shop_domain ?? undefined,
+      category: row.category,
+      subject: row.subject,
+      description: row.description,
+      status: row.status,
+      createdAt: toIso(row.created_at)
+    }));
   }
 
   async recordWebhook(receipt: WebhookReceipt): Promise<void> {

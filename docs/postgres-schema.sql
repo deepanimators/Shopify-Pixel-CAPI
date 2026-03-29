@@ -148,6 +148,21 @@ create table if not exists shop_installations (
   uninstalled_at timestamptz
 );
 
+create table if not exists support_requests (
+  request_id text primary key,
+  name text not null,
+  email text not null,
+  shop_domain text,
+  category text not null,
+  subject text not null,
+  description text not null,
+  status text not null,
+  created_at timestamptz not null
+);
+
+create index if not exists support_requests_created_at_idx
+  on support_requests (created_at desc);
+
 create table if not exists identity_profiles (
   identity_key text primary key,
   tenant_id text not null references tenants(tenant_id) on delete cascade,

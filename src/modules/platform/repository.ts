@@ -4,6 +4,7 @@ import type {
   MetaConnection,
   PlatformSeed,
   ShopInstallation,
+  SupportRequest,
   Tenant,
   TenantTrackingConfig,
   WebhookReceipt
@@ -29,6 +30,8 @@ export interface PlatformRepository {
     scopeType: DestinationScope["scopeType"],
     scopeId: string
   ): Promise<Tenant | null>;
+  createSupportRequest(request: SupportRequest): Promise<SupportRequest>;
+  listSupportRequests(limit: number): Promise<SupportRequest[]>;
   recordWebhook(receipt: WebhookReceipt): Promise<void>;
   listWebhooks(limit: number): Promise<WebhookReceipt[]>;
 }
@@ -37,6 +40,7 @@ export class InMemoryPlatformRepository implements PlatformRepository {
   private readonly tenants = new Map<string, Tenant>();
   private readonly installations = new Map<string, ShopInstallation>();
   private readonly webhooks: WebhookReceipt[];
+  private readonly supportRequests: SupportRequest[];
 
   constructor(seed: PlatformSeed) {
     for (const tenant of seed.tenants) {
@@ -48,6 +52,7 @@ export class InMemoryPlatformRepository implements PlatformRepository {
     }
 
     this.webhooks = [...seed.webhooks];
+    this.supportRequests = [...seed.supportRequests];
   }
 
   async listTenants(): Promise<Tenant[]> {
@@ -207,6 +212,15 @@ export class InMemoryPlatformRepository implements PlatformRepository {
     this.tenants.set(tenantId, updated);
 
     return updated;
+  }
+
+  async createSupportRequest(request: SupportRequest): Promise<SupportRequest> {
+    this.supportRequests.unshift(request);
+    return request;
+  }
+
+  async listSupportRequests(limit: number): Promise<SupportRequest[]> {
+    return this.supportRequests.slice(0, limit);
   }
 
   async recordWebhook(receipt: WebhookReceipt): Promise<void> {

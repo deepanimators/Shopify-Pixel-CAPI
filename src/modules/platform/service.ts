@@ -4,7 +4,7 @@ import type { EventRepository } from "../events/repository.js";
 import type { DeliveryStatus, NormalizedEvent } from "../events/types.js";
 import { EVENT_SCENARIOS, getScenarioById, scenarioSummary } from "../events/scenarios.js";
 import type { PlatformRepository } from "./repository.js";
-import type { DestinationScope, Tenant } from "./types.js";
+import type { DestinationScope, SupportRequest, Tenant } from "./types.js";
 import type { ShopifyAuthService } from "../shopify/auth.js";
 
 export class PlatformService {
@@ -157,6 +157,14 @@ export class PlatformService {
 
     const allowedTenantIds = new Set(tenantIds);
     return installations.filter((installation) => allowedTenantIds.has(installation.tenantId));
+  }
+
+  async createSupportRequest(request: SupportRequest) {
+    return this.platformRepository.createSupportRequest(request);
+  }
+
+  async listSupportRequests(limit = 20) {
+    return this.platformRepository.listSupportRequests(limit);
   }
 
   async getEventDiagnostics(tenantId?: string) {

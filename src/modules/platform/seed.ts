@@ -4,7 +4,8 @@ export function createEmptyPlatformData(): PlatformSeed {
   return {
     tenants: [],
     installations: [],
-    webhooks: []
+    webhooks: [],
+    supportRequests: []
   };
 }
 
@@ -170,5 +171,7 @@ export function createSeedPlatformData(): PlatformSeed {
       }
     ],
     webhooks: []
+    ,
+    supportRequests: []
   };
 }

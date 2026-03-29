@@ -110,8 +110,28 @@ export interface WebhookReceipt {
   verified: boolean;
 }
 
+export interface SupportRequest {
+  requestId: string;
+  name: string;
+  email: string;
+  shopDomain?: string;
+  category:
+    | "installation"
+    | "markets_and_domains"
+    | "event_mapping"
+    | "destination_delivery"
+    | "billing"
+    | "privacy"
+    | "other";
+  subject: string;
+  description: string;
+  status: "open" | "in_review" | "resolved";
+  createdAt: string;
+ }
+
 export interface PlatformSeed {
   tenants: Tenant[];
   installations: ShopInstallation[];
   webhooks: WebhookReceipt[];
+  supportRequests: SupportRequest[];
 }
