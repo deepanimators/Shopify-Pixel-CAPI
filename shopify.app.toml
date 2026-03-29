@@ -4,6 +4,9 @@ handle = "adtrace-enterprise"
 application_url = "https://fb-pixel-capi.pthapp.co.in"
 embedded = false
 
+[build]
+automatically_update_urls_on_dev = false
+
 [access_scopes]
 scopes = "read_orders,read_customers,read_markets,write_pixels,read_customer_events"
 
