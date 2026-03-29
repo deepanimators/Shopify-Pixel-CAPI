@@ -117,6 +117,53 @@ describe("events route", () => {
     expect(response.status).toBe(202);
     expect(response.body.event.canonicalEvent).toBe("search");
   });
+
+  it("marks events as skipped when the scenario is disabled for the tenant", async () => {
+    const app = createApp(createContainer());
+
+    await request(app).put("/api/admin/tenants/global-fashion/tracking").send({
+      enabledScenarioIds: ["purchase"],
+      customEventMappings: []
+    });
+
+    const response = await request(app).post("/api/events").send({
+      shopDomain: "global-fashion.myshopify.com",
+      eventName: "product_added_to_cart",
+      source: "browser",
+      eventId: "evt_disabled_scenario",
+      market: {
+        countryCode: "US",
+        currencyCode: "USD",
+        marketId: "us",
+        domain: "example.com"
+      },
+      user: {
+        anonymousId: "anon_disabled"
+      },
+      commerce: {
+        cartId: "cart_disabled",
+        value: 109,
+        currency: "USD"
+      },
+      lineItems: [
+        {
+          productId: "prod_disabled",
+          quantity: 1,
+          price: 109,
+          currency: "USD"
+        }
+      ],
+      page: {
+        url: "https://example.com/cart"
+      }
+    });
+
+    expect(response.status).toBe(202);
+    expect(response.body.event.scenarioEnabled).toBe(false);
+    expect(response.body.event.qualityWarnings).toContain("scenario_disabled_for_tenant");
+    expect(response.body.event.deliveries.meta.status).toBe("skipped");
+    expect(response.body.event.deliveries.ga4.status).toBe("skipped");
+  });
 });
 
 describe("admin route", () => {
